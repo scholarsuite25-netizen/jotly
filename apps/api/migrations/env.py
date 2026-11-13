@@ -6,6 +6,7 @@ from sqlalchemy import engine_from_config, pool
 from app.core.config import get_settings
 from app.core.db import Base
 import app.models.foundation  # noqa: F401
+import app.models.meetings_media  # noqa: F401
 
 config = context.config
 

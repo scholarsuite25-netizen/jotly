@@ -34,9 +34,11 @@ Use the stack explicitly established in the current repository and blueprint. Do
 
 ## Current work snapshot
 Keep this section updated by the project owner or lead agent:
-- Current release/milestone: Phase 1 — Secure Foundation (Step 0 + Phase 1).
-- Active branch: `feat/phase-1-secure-foundation`
+- Current release/milestone: Phase 2 — Recording and Media (Completed).
+- Active branch: `feat/phase-2-recording-media`
 - Approved delivery & hosting path: OpenCode → GitHub (CI/CD, SDLC gates) → Vercel (`apps/web`) + Cloudflare (Backend Edge/WAF/Tunnel/R2) + Hostinger VPS Self-Hosting (`apps/api`, workers, PostgreSQL/Redis) + Supabase Auth + Multi-Provider Email (Resend, Emailbump, Unipost).
-- Implemented features: Phase 1 Secure Foundation (OIDC/Supabase Auth verification, multi-tenant RBAC, PostgreSQL RLS baseline, tamper-evident hash-chained audit service, multi-provider email adapter, SDLC/DevOps pipelines, and automated cross-tenant negative test suite).
-- Known blockers: None for Phase 1. Voice cloning remains disabled by feature flag (`VOICE_CLONING_ENABLED=false`) pending Phase 6 governance gates.
-- Next approved task: Phase 2 — Recording and Media (`prompts/phases/02_PHASE_RECORDING_MEDIA.md`).
+- Implemented features:
+  - Phase 1: Secure Foundation (Supabase Auth JWT verification, multi-tenant RBAC, PostgreSQL RLS baseline, tamper-evident hash-chained audit service, Resend/Emailbump/Unipost email adapter, SDLC/DevOps pipelines).
+  - Phase 2: Recording and Media (Meeting creation & participant roster, mandatory pre-recording notice & host confirmation gate, browser microphone recorder state machine & unload guard, resumable chunked upload with SHA-256 & magic-byte validation, private tenant-prefixed storage, asynchronous media validation/normalisation worker preserving original media separately from derivatives, and short-lived signed playback URLs).
+- Known blockers: None for Phase 2. Voice cloning remains disabled by feature flag (`VOICE_CLONING_ENABLED=false`) pending Phase 6 governance gates.
+- Next approved task: Phase 3 — Transcription (`prompts/phases/03_PHASE_TRANSCRIPTION.md`).

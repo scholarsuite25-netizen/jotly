@@ -24,8 +24,12 @@
 | Invitations | `POST /api/v1/organisations/{org_id}/invitations` | Invite member & send email via Resend/Emailbump/Unipost adapter |
 | Jobs | `GET /api/v1/jobs/{job_id}`, `POST /api/v1/jobs/{job_id}/cancel` | Tenant-isolated background job status & cancellation |
 | Audit | `GET /api/v1/audit-events`, `GET /api/v1/audit-events/verify` | Retrieve permitted audit records & verify tamper-evident hash chain |
-| Meetings | `POST /api/v1/meetings` | Create meeting |
-| Upload | `POST /api/v1/meetings/{id}/uploads` | Create resumable upload session |
+| Meetings | `POST /api/v1/meetings`, `GET /api/v1/meetings`, `GET /api/v1/meetings/{id}` | Create/read meeting metadata & attendees |
+| Recording Notice | `POST /api/v1/meetings/{id}/recording-notice-confirm` | Record host confirmation of recording notice & consent reminder |
+| Upload Session | `POST /api/v1/meetings/{id}/uploads`, `GET /api/v1/meetings/{id}/uploads/{session_id}` | Create & inspect resumable upload session |
+| Upload Chunks | `PUT /api/v1/meetings/{id}/uploads/{session_id}/chunks/{chunk_index}` | Upload checksum-verified & signature-validated chunk |
+| Upload Finalise | `POST /api/v1/meetings/{id}/uploads/{session_id}/complete` | Verify manifest, assemble original media, queue normalisation worker |
+| Media & Playback | `GET /api/v1/meetings/{id}/media`, `GET /api/v1/media/{asset_id}/playback-url`, `GET /api/v1/media/{asset_id}/stream` | List assets/derivatives & issue/verify short-lived signed playback URLs |
 | Transcription | `POST /api/v1/media/{id}/transcriptions` | Queue ASR |
 | Transcript | `GET /api/v1/transcripts/{id}` | Fetch authorised transcript |
 | Transcript edit | `PATCH /api/v1/transcripts/{id}/segments/{segment_id}` | Edit segment with revision |
