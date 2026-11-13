@@ -30,10 +30,10 @@
 | Upload Chunks | `PUT /api/v1/meetings/{id}/uploads/{session_id}/chunks/{chunk_index}` | Upload checksum-verified & signature-validated chunk |
 | Upload Finalise | `POST /api/v1/meetings/{id}/uploads/{session_id}/complete` | Verify manifest, assemble original media, queue normalisation worker |
 | Media & Playback | `GET /api/v1/meetings/{id}/media`, `GET /api/v1/media/{asset_id}/playback-url`, `GET /api/v1/media/{asset_id}/stream` | List assets/derivatives & issue/verify short-lived signed playback URLs |
-| Transcription | `POST /api/v1/media/{id}/transcriptions` | Queue ASR |
-| Transcript | `GET /api/v1/transcripts/{id}` | Fetch authorised transcript |
-| Transcript edit | `PATCH /api/v1/transcripts/{id}/segments/{segment_id}` | Edit segment with revision |
-| Export | `POST /api/v1/transcripts/{id}/exports` | Create DOCX/PDF export |
+| Transcript | `GET /api/v1/transcripts/{id}` | Fetch authorised transcript with segments, speaker suggestions & revision metadata |
+| Transcription | `POST /api/v1/media/{id}/transcriptions` | Queue idempotent ASR job; execute in isolated worker tenant context |
+| Transcript edit | `PATCH /api/v1/transcripts/{id}/segments/{segment_id}`, `POST .../undo`, `POST .../find-replace`, `POST .../speakers/{speaker_id}/relabel` | Edit segments with immutable revision history, undo, bulk replace & speaker relabel |
+| Export | `POST /api/v1/transcripts/{id}/exports`, `GET /api/v1/transcripts/{id}/exports`, `POST /api/v1/transcripts/{id}/evaluation` | Create TXT/SRT/VTT exports, list export-ready data, and run WER evaluation harness |
 | Document ingest | `POST /api/v1/documents` | Upload and extract document |
 | TTS | `POST /api/v1/speech-projects` | Create speech job |
 | Voice consent | `POST /api/v1/voice-consents` | Record consent/authorisation |

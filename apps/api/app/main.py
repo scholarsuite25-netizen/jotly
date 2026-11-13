@@ -4,7 +4,18 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import get_settings
 from app.core.correlation import CorrelationIdMiddleware
 from app.core.errors import register_exception_handlers
-from app.routers import audit, health, identity, jobs, media, meetings, organisations
+from app.routers import (
+    audit,
+    exports_evaluation,
+    health,
+    identity,
+    jobs,
+    media,
+    meetings,
+    organisations,
+    transcripts,
+    transcriptions,
+)
 
 
 def create_app() -> FastAPI:
@@ -39,8 +50,12 @@ def create_app() -> FastAPI:
     app.include_router(organisations.router, prefix=prefix)
     app.include_router(meetings.router, prefix=prefix)
     app.include_router(media.router, prefix=prefix)
+    app.include_router(transcriptions.router, prefix=prefix)
+    app.include_router(transcripts.router, prefix=prefix)
+    app.include_router(exports_evaluation.router, prefix=prefix)
     app.include_router(audit.router, prefix=prefix)
     app.include_router(jobs.router, prefix=prefix)
+    app.include_router(transcripts.router, prefix=prefix)
 
     return app
 
