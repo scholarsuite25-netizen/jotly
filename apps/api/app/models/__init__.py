@@ -31,11 +31,23 @@ from app.models.transcription import (
     TranscriptSegment,
     TranscriptSpeaker,
 )
+from app.models.documents import (
+    Document,
+    DocumentExport,
+    DocumentShare,
+    DocumentTemplate,
+    DocumentVersion,
+)
 
 __all__ = [
     "AuditLog",
     "BackgroundJob",
     "Department",
+    "Document",
+    "DocumentExport",
+    "DocumentShare",
+    "DocumentTemplate",
+    "DocumentVersion",
     "Invitation",
     "MediaAsset",
     "MediaChunk",
