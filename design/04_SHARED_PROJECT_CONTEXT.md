@@ -34,11 +34,12 @@ Use the stack explicitly established in the current repository and blueprint. Do
 
 ## Current work snapshot
 Keep this section updated by the project owner or lead agent:
-- Current release/milestone: Phase 2 — Recording and Media (Completed).
-- Active branch: `feat/phase-2-recording-media`
+- Current release/milestone: Phase 3 — Transcription (Completed).
+- Active branch: `feat/phase-3-transcription`
 - Approved delivery & hosting path: OpenCode → GitHub (CI/CD, SDLC gates) → Vercel (`apps/web`) + Cloudflare (Backend Edge/WAF/Tunnel/R2) + Hostinger VPS Self-Hosting (`apps/api`, workers, PostgreSQL/Redis) + Supabase Auth + Multi-Provider Email (Resend, Emailbump, Unipost).
 - Implemented features:
   - Phase 1: Secure Foundation (Supabase Auth JWT verification, multi-tenant RBAC, PostgreSQL RLS baseline, tamper-evident hash-chained audit service, Resend/Emailbump/Unipost email adapter, SDLC/DevOps pipelines).
   - Phase 2: Recording and Media (Meeting creation & participant roster, mandatory pre-recording notice & host confirmation gate, browser microphone recorder state machine & unload guard, resumable chunked upload with SHA-256 & magic-byte validation, private tenant-prefixed storage, asynchronous media validation/normalisation worker preserving original media separately from derivatives, and short-lived signed playback URLs).
-- Known blockers: None for Phase 2. Voice cloning remains disabled by feature flag (`VOICE_CLONING_ENABLED=false`) pending Phase 6 governance gates.
-- Next approved task: Phase 3 — Transcription (`prompts/phases/03_PHASE_TRANSCRIPTION.md`).
+  - Phase 3: Transcription (Replaceable server-side ASR adapter interface with deterministic CPU-safe stub for CI/development and deferred faster-whisper production adapter, queued idempotent transcription jobs, timestamped segments with confidence metadata, language selection & allowlist, model-suggested speaker diarisation (`is_model_suggestion=true`, `identity_verified=false`), human transcript editing with immutable revision history & undo, speaker relabel history, bulk find/replace, TXT/SRT/VTT exports, and WER evaluation harness with per-segment metrics & accuracy disclaimer).
+- Known blockers: None for Phase 3. Voice cloning remains disabled by feature flag (`VOICE_CLONING_ENABLED=false`) pending Phase 6 governance gates.
+- Next approved task: Phase 4 — Document Studio (`prompts/phases/04_PHASE_DOCUMENTS.md`).

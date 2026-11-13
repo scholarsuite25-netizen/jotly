@@ -23,6 +23,14 @@ from app.models.meetings_media import (
     Meeting,
     MeetingParticipant,
 )
+from app.models.transcription import (
+    SpeakerLabel,
+    Transcript,
+    TranscriptExport,
+    TranscriptRevision,
+    TranscriptSegment,
+    TranscriptSpeaker,
+)
 
 __all__ = [
     "AuditLog",
@@ -41,6 +49,12 @@ __all__ = [
     "Role",
     "RolePermission",
     "SessionRecord",
+    "SpeakerLabel",
+    "Transcript",
+    "TranscriptExport",
+    "TranscriptRevision",
+    "TranscriptSegment",
+    "TranscriptSpeaker",
     "User",
     "UserRole",
     "Workspace",
