@@ -14,12 +14,28 @@ from app.models.foundation import (
     UserRole,
     Workspace,
 )
+from app.models.meetings_media import (
+    MediaAsset,
+    MediaChunk,
+    MediaDerivative,
+    MediaProcessingJob,
+    MediaUploadSession,
+    Meeting,
+    MeetingParticipant,
+)
 
 __all__ = [
     "AuditLog",
     "BackgroundJob",
     "Department",
     "Invitation",
+    "MediaAsset",
+    "MediaChunk",
+    "MediaDerivative",
+    "MediaProcessingJob",
+    "MediaUploadSession",
+    "Meeting",
+    "MeetingParticipant",
     "Organisation",
     "Permission",
     "Role",
