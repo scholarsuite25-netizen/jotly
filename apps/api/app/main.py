@@ -6,6 +6,7 @@ from app.core.correlation import CorrelationIdMiddleware
 from app.core.errors import register_exception_handlers
 from app.routers import (
     audit,
+    documents,
     exports_evaluation,
     health,
     identity,
@@ -53,6 +54,8 @@ def create_app() -> FastAPI:
     app.include_router(transcriptions.router, prefix=prefix)
     app.include_router(transcripts.router, prefix=prefix)
     app.include_router(exports_evaluation.router, prefix=prefix)
+    app.include_router(documents.router, prefix=prefix)
+    app.include_router(documents.transcript_ingest_router, prefix=prefix)
     app.include_router(audit.router, prefix=prefix)
     app.include_router(jobs.router, prefix=prefix)
     app.include_router(transcripts.router, prefix=prefix)
