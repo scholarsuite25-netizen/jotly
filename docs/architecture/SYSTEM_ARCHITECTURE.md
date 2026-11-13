@@ -14,13 +14,15 @@
 
 ```mermaid
 flowchart TB
-  U[Browser / Responsive Web App] --> WEB[Next.js Web Client]
-  WEB --> API[FastAPI Application]
-  API --> IDP[OIDC Identity Provider]
-  API --> DB[(PostgreSQL)]
+  U[Browser / Responsive Web App] --> WEB[Next.js Web Client on Vercel]
+  WEB --> CF[Cloudflare Edge / WAF / Zero Trust Tunnel]
+  CF --> API[FastAPI Application on Hostinger Self-Hosted VPS]
+  API --> SUPA[Supabase Auth / OIDC JWT]
+  API --> DB[(PostgreSQL with RLS)]
   API --> REDIS[(Redis)]
-  API --> OBJ[(Private S3-Compatible Object Storage)]
-  REDIS --> WORK[Background Workers]
+  API --> OBJ[(Private S3-Compatible Storage: Cloudflare R2 / MinIO)]
+  API --> EMAIL[Email Adapter: Resend / Emailbump / Unipost]
+  REDIS --> WORK[Background Workers on Hostinger]
   WORK --> MEDIA[FFmpeg Media Processing]
   WORK --> ASR[ASR Adapter]
   WORK --> DIAR[Speaker Diarisation Adapter]
@@ -32,30 +34,34 @@ flowchart TB
   DOC --> OBJ
   TTS --> OBJ
   LLM --> DB
-  API --> AUDIT[Audit / Security Events]
+  API --> AUDIT[Tamper-Evident Hash-Chained Audit Events]
   WORK --> AUDIT
 ```
 
 ## 3. Recommended stack
 | Layer | Candidate | Notes |
 |---|---|---|
-| Web client | Next.js, React, TypeScript | Responsive enterprise application |
+| Web client | Next.js, React, TypeScript (hosted on Vercel) | Responsive enterprise application |
 | UI | Tailwind CSS, shadcn/ui | Accessible consistent components |
-| API | Python FastAPI | Typed API and AI ecosystem |
-| Database | PostgreSQL | Relational source of truth, full-text search, RLS |
-| Jobs | Redis + Celery or Dramatiq | Long-running media/document/model jobs |
-| Object storage | S3-compatible, e.g. MinIO | Private buckets and lifecycle |
-| Identity | Keycloak or managed OIDC | MFA, SSO, identity lifecycle |
+| Backend Edge & Proxy | Cloudflare (WAF, Zero Trust Tunnel, Rate Limiting) | Protects backend endpoints and API ingress |
+| API & Workers Host | Python FastAPI on Hostinger Self-Hosted VPS (Docker Compose) | Typed API and AI ecosystem |
+| Database | PostgreSQL (Supabase Postgres or self-hosted Postgres 16) | Relational source of truth, full-text search, RLS |
+| Jobs | Redis + Dramatiq / Celery | Long-running media/document/model jobs with tenant context |
+| Object storage | S3-compatible (Cloudflare R2 or self-hosted MinIO) | Private buckets and short-lived presigned URLs |
+| Identity | Supabase Auth (OIDC/JWT compatible) | MFA (`aal2`), SSO readiness, identity lifecycle |
+| Transactional Email | Resend, Emailbump, Unipost | Narrow multi-provider adapter with failover; no sensitive content in payloads |
 | ASR | Whisper / faster-whisper | Benchmark models/hardware |
 | Diarisation | WhisperX plus separately licensed model or approved alternative | Verify all terms and access |
 | Standard TTS | Kokoro for supported languages; evaluate CosyVoice | Language coverage varies |
-| Voice cloning | OpenVoice V2 initial evaluation; CosyVoice alternative evaluation | Consent gate and model licence gate |
+| Voice cloning | OpenVoice V2 initial evaluation; CosyVoice alternative evaluation | Consent gate and model licence gate (`VOICE_CLONING_ENABLED=false`) |
 | Local LLM | Ollama or approved runtime | Weights have individual licences |
 | DOCX | python-docx | Generation/editing |
 | PDF | LibreOffice headless; ReportLab for controlled layouts | Visual regression required |
+| OCR | Tesseract / RapidOCR behind replaceable OCR adapter | Scanned PDF page detection with user warning |
 | Media | FFmpeg | Build/licence configuration review |
-| Tests | pytest, Vitest, Playwright | Backend, UI, end-to-end |
-| Observability | OpenTelemetry, Prometheus/Grafana, structured logs | Metrics and traces |
+| Tests | pytest, Vitest, Playwright | Backend, UI, end-to-end, negative security/RLS |
+| SDLC & DevOps | OpenCode → GitHub Actions CI/CD → Vercel + Cloudflare + Hostinger | Automated lint, typecheck, tests, secret scan, SBOM, and migration gates |
+| Observability | OpenTelemetry, Prometheus/Grafana, structured logs | Metrics, correlation IDs, and tamper-evident audit chain |
 
 ## 4. Service boundaries
 - **Identity/Tenant:** identity claims, organisation membership, role/permission resolution.

@@ -1,10 +1,20 @@
 # 11 — Deployment and Operations
 
-## 1. Environments
+## 1. Environments & Approved Delivery Pipeline
+
+### Approved SDLC & Hosting Path
+- **Development & Authoring:** OpenCode (primary implementation agent) and Antigravity (complementary design/review agent).
+- **Source Control & CI/CD:** GitHub (`main` protected branch + feature branches) with GitHub Actions automated SDLC quality gates (`.github/workflows/ci.yml`).
+- **Frontend Hosting:** **Vercel** deploying `apps/web` (Next.js App Router).
+- **Backend Edge & Security Gateway:** **Cloudflare** (DNS, WAF, Rate Limiting, Zero Trust Tunnel `cloudflared`, and S3-compatible R2 private object storage).
+- **Backend & Worker Self-Hosting:** **Hostinger VPS** running Docker Compose (`infra/hostinger/docker-compose.hostinger.yml`) for FastAPI (`apps/api`), background workers, Redis, PostgreSQL (or Supabase Postgres), and self-hosted AI/media adapters.
+- **Identity Provider:** **Supabase Auth** (`SUPABASE_URL`, `SUPABASE_JWT_SECRET` / JWKS) with server-side tenant membership and RLS enforcement.
+- **Transactional Email:** Multi-provider adapter supporting **Resend**, **Emailbump**, and **Unipost** with automatic failover.
+
 ### Development
-- Docker Compose
+- Docker Compose (`docker-compose.yml`) or local Python/Node test runners
 - Synthetic/test data
-- Local model weights
+- Local or stubbed model weights
 - No production secrets or real customer recordings
 
 ### Staging

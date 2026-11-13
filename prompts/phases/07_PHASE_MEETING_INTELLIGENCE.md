@@ -1,4 +1,4 @@
-# Antigravity Prompt — Phase 7: Meeting Intelligence and RAG
+# Phase Prompt — Phase 7: Meeting Intelligence and RAG (OpenCode Lead / Antigravity Review)
 
 Implement summaries, minutes, decisions, open questions, action items, search, and Q&A grounded in authorised transcripts.
 

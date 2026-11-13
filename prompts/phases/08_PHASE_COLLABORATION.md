@@ -1,4 +1,4 @@
-# Antigravity Prompt — Phase 8: Enterprise Collaboration
+# Phase Prompt — Phase 8: Enterprise Collaboration (OpenCode Lead / Antigravity Review)
 
 Implement:
 - workspace and department sharing

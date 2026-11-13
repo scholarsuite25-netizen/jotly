@@ -8,13 +8,14 @@ NEXUS Meeting Intelligence is the product described by the approved blueprint an
 
 ## Canonical sources
 - `README.md`: repository map, getting started and document index.
-- `00_PRODUCT_REQUIREMENTS.md`: product scope and requirements.
-- `01_ARCHITECTURE.md`: architecture principles and system boundaries.
-- `03_DOMAIN_MODEL_AND_DATABASE.md`: domain entities and persistence.
-- `04_API_AND_INTEGRATION_CONTRACTS.md`: interfaces and external integrations.
-- `05_SECURITY_THREAT_MODEL.md`: threat and security controls.
-- `06_PRIVACY_RECORDING_AND_VOICE_CONSENT.md`: recording, consent and voice governance.
-- `14_DECISIONS_AND_ASSUMPTIONS.md` and `DECISIONS.md`: decisions and unresolved assumptions.
+- `docs/product/PRODUCT_REQUIREMENTS.md`: product scope and requirements.
+- `docs/architecture/SYSTEM_ARCHITECTURE.md`: architecture principles and system boundaries.
+- `docs/data-and-api/DOMAIN_MODEL_AND_DATABASE.md`: domain entities and persistence.
+- `docs/data-and-api/API_AND_INTEGRATION_CONTRACTS.md`: interfaces and external integrations.
+- `docs/security-and-privacy/SECURITY_THREAT_MODEL.md`: threat and security controls.
+- `docs/security-and-privacy/PRIVACY_RECORDING_AND_VOICE_CONSENT.md`: recording, consent and voice governance.
+- `docs/architecture/DECISIONS_AND_ASSUMPTIONS.md` and `docs/architecture/DECISION_LOG.md`: decisions and unresolved assumptions.
+- `docs/quality-and-operations/`: testing, acceptance, deployment, DevOps, and licence governance.
 - `design/`: multi-agent collaboration operating rules.
 
 If documents conflict, do not choose silently. Identify the conflict, cite the affected sections, and request owner direction or record a proposed resolution for approval.
@@ -33,8 +34,9 @@ Use the stack explicitly established in the current repository and blueprint. Do
 
 ## Current work snapshot
 Keep this section updated by the project owner or lead agent:
-- Current release/milestone: Not yet recorded.
-- Active branch: Not yet recorded.
-- Implemented features: Must be verified from repository and tests.
-- Known blockers: Not yet recorded.
-- Next approved task: Not yet recorded.
+- Current release/milestone: Phase 1 — Secure Foundation (Step 0 + Phase 1).
+- Active branch: `feat/phase-1-secure-foundation`
+- Approved delivery & hosting path: OpenCode → GitHub (CI/CD, SDLC gates) → Vercel (`apps/web`) + Cloudflare (Backend Edge/WAF/Tunnel/R2) + Hostinger VPS Self-Hosting (`apps/api`, workers, PostgreSQL/Redis) + Supabase Auth + Multi-Provider Email (Resend, Emailbump, Unipost).
+- Implemented features: Phase 1 Secure Foundation (OIDC/Supabase Auth verification, multi-tenant RBAC, PostgreSQL RLS baseline, tamper-evident hash-chained audit service, multi-provider email adapter, SDLC/DevOps pipelines, and automated cross-tenant negative test suite).
+- Known blockers: None for Phase 1. Voice cloning remains disabled by feature flag (`VOICE_CLONING_ENABLED=false`) pending Phase 6 governance gates.
+- Next approved task: Phase 2 — Recording and Media (`prompts/phases/02_PHASE_RECORDING_MEDIA.md`).

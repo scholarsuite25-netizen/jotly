@@ -101,7 +101,7 @@ At completion report:
 - known gaps
 - next recommended task
 
-Read `00_PRODUCT_REQUIREMENTS.md`, `01_ARCHITECTURE.md`, `02_IMPLEMENTATION_ROADMAP.md`, `03_DOMAIN_MODEL_AND_DATABASE.md`, and `05_SECURITY_THREAT_MODEL.md` before coding.
+Read `docs/product/PRODUCT_REQUIREMENTS.md`, `docs/architecture/SYSTEM_ARCHITECTURE.md`, `docs/architecture/IMPLEMENTATION_ROADMAP.md`, `docs/data-and-api/DOMAIN_MODEL_AND_DATABASE.md`, and `docs/security-and-privacy/SECURITY_THREAT_MODEL.md` before coding.
 
 ## Dual-agent collaboration with OpenCode
 OpenCode is the primary implementation environment by default; you are the complementary design, visual validation and independent review environment. Either agent may lead a clearly assigned task. The shared GitHub repository and approved Markdown specifications are the sources of truth.

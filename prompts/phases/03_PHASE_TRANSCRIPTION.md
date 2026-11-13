@@ -1,4 +1,4 @@
-# Antigravity Prompt — Phase 3: Transcription
+# Phase Prompt — Phase 3: Transcription (OpenCode Lead / Antigravity Review)
 
 Implement transcription through a replaceable server-side ASR adapter, initially evaluating Whisper/faster-whisper.
 

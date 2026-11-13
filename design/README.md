@@ -12,4 +12,4 @@ This folder governs how OpenCode and Antigravity collaborate on the NEXUS produc
 7. `03_CROSS_AGENT_CODE_REVIEW.md`
 8. `06_INTEGRATION_AND_REGRESSION_TESTING.md`
 
-Use `prompts/00_MASTER_OPENCODE_PROMPT.md` and `prompts/00_MASTER_ANTIGRAVITY_PROMPT.md` to initialize each agent. Update the shared project snapshot and decision records as implementation progresses.
+Use `prompts/opencode/MASTER_OPENCODE_PROMPT.md` and `prompts/antigravity/MASTER_ANTIGRAVITY_PROMPT.md` to initialize each agent. Update the shared project snapshot and decision records as implementation progresses.

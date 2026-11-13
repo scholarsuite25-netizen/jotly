@@ -1,4 +1,4 @@
-# Antigravity Prompt — Phase 4: Document Studio
+# Phase Prompt — Phase 4: Document Studio (OpenCode Lead / Antigravity Review)
 
 Implement document ingestion and export.
 

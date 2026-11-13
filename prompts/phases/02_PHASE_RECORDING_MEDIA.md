@@ -1,4 +1,4 @@
-# Antigravity Prompt — Phase 2: Recording and Media
+# Phase Prompt — Phase 2: Recording and Media (OpenCode Lead / Antigravity Review)
 
 Implement browser microphone recording and media management only after Phase 1 acceptance.
 
