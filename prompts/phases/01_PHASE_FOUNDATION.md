@@ -1,4 +1,4 @@
-# Antigravity Prompt — Phase 1: Secure Foundation
+# Phase Prompt — Phase 1: Secure Foundation (OpenCode Lead / Antigravity Review)
 
 Read the NEXUS documentation before coding. Inspect the current repository and report planned file changes first.
 

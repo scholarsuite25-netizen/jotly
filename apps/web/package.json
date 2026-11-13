@@ -1,0 +1,13 @@
+{
+  "name": "nexus-meeting-web",
+  "version": "0.1.0",
+  "private": true,
+  "description": "NEXUS Meeting Intelligence — Next.js Web Client (Vercel Deployment Target)",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "typecheck": "tsc --noEmit",
+    "test": "node --test tests/foundation.test.mjs"
+  }
+}

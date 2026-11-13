@@ -1,4 +1,4 @@
-# Antigravity Prompt — Phase 9: Hardening and Release Readiness
+# Phase Prompt — Phase 9: Hardening and Release Readiness (OpenCode Lead / Antigravity Review)
 
 Perform a release-readiness review; do not claim production readiness without evidence.
 

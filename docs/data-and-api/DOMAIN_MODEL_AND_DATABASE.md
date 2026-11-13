@@ -66,13 +66,19 @@ Every long-running job must include:
 
 Statuses: `queued`, `running`, `succeeded`, `failed`, `cancelled`.
 
-## 6. Database security
-- Use PostgreSQL Row-Level Security (RLS) where appropriate.
-- Set tenant context safely for each transaction/request.
+## 6. Database security & PostgreSQL RLS contract
+- Use PostgreSQL Row-Level Security (RLS) on all tenant-owned tables (`ENABLE ROW LEVEL SECURITY` and `FORCE ROW LEVEL SECURITY`).
+- Set tenant and actor context safely within each database transaction using:
+  - `SET LOCAL app.current_organisation_id = '<verified_org_uuid>';`
+  - `SET LOCAL app.current_user_id = '<verified_user_uuid>';`
+- Standard tenant isolation policy expression:
+  - `USING (organisation_id = NULLIF(current_setting('app.current_organisation_id', true), '')::uuid)`
+  - `WITH CHECK (organisation_id = NULLIF(current_setting('app.current_organisation_id', true), '')::uuid)`
 - Do not trust client-supplied `organisation_id`.
-- Derive tenant context from authenticated membership and authorised server-side selection.
+- Derive tenant context from authenticated Supabase Auth identity and verified server-side `user_roles` membership.
 - Add tests for direct SQL/API access, guessed IDs, search, jobs, and object storage.
-- Ensure background workers establish tenant context explicitly.
+- Ensure background workers establish tenant context explicitly before executing job logic.
+- Maintain a tamper-evident per-organisation `SHA-256` hash chain (`previous_hash`, `entry_hash`) on `audit_logs`.
 
 ## 7. Retention and deletion
 Retention policy must be configurable by tenant and record class. Legal holds override routine deletion only when properly authorised and recorded. Deletion requests must track requested scope, approval, processing, object purge, derivative purge, backup expiry, exceptions, and completion evidence. Do not claim immediate erasure from backups unless the actual backup lifecycle supports it.

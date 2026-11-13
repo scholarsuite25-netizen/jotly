@@ -1,0 +1,45 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+.Python
+.venv/
+venv/
+ENV/
+env/
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# Node / Next.js / Vercel
+node_modules/
+.next/
+out/
+dist/
+build/
+.vercel/
+*.tsbuildinfo
+
+# Environment & Secrets (NEVER commit real secrets)
+.env
+.env.*
+!.env.example
+
+# Databases, Storage & Local Artifacts
+*.db
+*.sqlite
+*.sqlite3
+storage_data/
+postgres_data/
+redis_data/
+minio_data/
+
+# OS & Editor files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.log

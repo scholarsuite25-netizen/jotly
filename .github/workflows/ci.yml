@@ -1,0 +1,67 @@
+name: NEXUS SDLC & DevOps Quality Gates
+
+on:
+  push:
+    branches: ["main", "develop", "feat/**", "fix/**", "chore/**"]
+  pull_request:
+    branches: ["main", "develop"]
+
+permissions:
+  contents: read
+
+jobs:
+  secret-and-governance-check:
+    name: "Gate 1: Secret Scan & Voice-Cloning Lock Verification"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify no .env files or private keys are tracked
+        run: |
+          if git ls-files | grep -E '(^|/)\.env($|\.)' | grep -v '\.env\.example$'; then
+            echo "ERROR: Tracked .env file detected!"
+            exit 1
+          fi
+          if git grep -E 'BEGIN (RSA|EC|OPENSSH|PRIVATE) KEY'; then
+            echo "ERROR: Private key material detected in repository!"
+            exit 1
+          fi
+      - name: Verify Voice Cloning remains disabled by default in config
+        run: |
+          grep -q "VOICE_CLONING_ENABLED=false" .env.example
+
+  backend-test-and-audit-gate:
+    name: "Gate 2: FastAPI Backend, RLS Isolation, Email Failover & Audit Chain Tests"
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/api
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install backend dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      - name: Run pytest suite (Unit, Integration, Cross-Tenant Denial, RLS DDL, Audit Chain)
+        run: |
+          pytest -v --tb=short
+
+  frontend-test-and-typecheck-gate:
+    name: "Gate 3: Next.js Web Client (Vercel Target) Typecheck & Unit Tests"
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Install frontend dependencies
+        run: npm install
+      - name: TypeScript typecheck
+        run: npm run typecheck
+      - name: Run Vitest unit tests
+        run: npm test

@@ -1,0 +1,106 @@
+# =============================================================================
+# Hostinger VPS Self-Hosting Compose Stack (Production / Staging)
+# Traffic enters via Cloudflare Zero Trust Tunnel (cloudflared) -> FastAPI API
+# Frontend is hosted on Vercel; Authentication is handled via Supabase Auth.
+# =============================================================================
+name: "nexus-meeting-hostinger"
+
+services:
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    restart: always
+    command: tunnel --no-autoupdate run
+    environment:
+      TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN}
+    depends_on:
+      api:
+        condition: service_healthy
+    networks:
+      - nexus_edge
+
+  postgres:
+    image: postgres:16-alpine
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-nexus_meeting}
+    volumes:
+      - hostinger_pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB:-nexus_meeting}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - nexus_internal
+
+  redis:
+    image: redis:7-alpine
+    restart: always
+    command: ["redis-server", "--appendonly", "yes", "--maxmemory", "512mb", "--maxmemory-policy", "noeviction"]
+    volumes:
+      - hostinger_redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - nexus_internal
+
+  api:
+    build:
+      context: ../../apps/api
+      dockerfile: Dockerfile
+    restart: always
+    env_file:
+      - ../../.env
+    environment:
+      NEXUS_ENV: production
+      VOICE_CLONING_ENABLED: "false"
+    expose:
+      - "8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/v1/health')"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+    networks:
+      - nexus_edge
+      - nexus_internal
+
+  worker:
+    build:
+      context: ../../apps/api
+      dockerfile: Dockerfile
+    restart: always
+    command: ["python", "-m", "app.workers.runner"]
+    env_file:
+      - ../../.env
+    environment:
+      NEXUS_ENV: production
+      VOICE_CLONING_ENABLED: "false"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - nexus_internal
+
+networks:
+  nexus_edge:
+    driver: bridge
+  nexus_internal:
+    driver: bridge
+    internal: true
+
+volumes:
+  hostinger_pg_data:
+  hostinger_redis_data:

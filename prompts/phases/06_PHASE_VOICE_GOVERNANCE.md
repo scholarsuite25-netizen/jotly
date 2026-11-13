@@ -1,4 +1,4 @@
-# Antigravity Prompt — Phase 6: Consent-Gated Voice Governance
+# Phase Prompt — Phase 6: Consent-Gated Voice Governance (OpenCode Lead / Antigravity Review)
 
 This phase is high risk. Do not enable public voice cloning. Build governance and a restricted evaluation environment first.
 

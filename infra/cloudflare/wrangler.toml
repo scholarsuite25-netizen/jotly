@@ -1,0 +1,7 @@
+name = "nexus-backend-edge-gateway"
+main = "edge-worker.js"
+compatibility_date = "2026-01-01"
+
+[vars]
+ALLOWED_VERCEL_ORIGIN = "https://nexus-meeting.vercel.app"
+HOSTINGER_ORIGIN_URL = "https://origin-api.nexus-meeting.example.com"
