@@ -144,6 +144,9 @@ export default function DashboardScreen({
           tid = executed.transcript_id || null;
           status = executed.status || status;
         }
+        if (tid) {
+          setTranscriptIdInput(tid);
+        }
         setNotice(
           tid
             ? `Transcription ${status} (transcript ${tid}).`
@@ -229,6 +232,7 @@ export default function DashboardScreen({
 
       <section aria-label="Open transcript">
         <h2>Open transcript</h2>
+        <p>Paste a transcript ID, or use <strong>Transcribe/Open</strong> on a meeting to generate and auto-fill one.</p>
         <label htmlFor="transcript-id">Transcript ID</label>
         <input
           id="transcript-id"
