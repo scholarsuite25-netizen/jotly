@@ -17,6 +17,7 @@ from app.routers import (
     speech,
     intelligence,
     collaboration,
+    release,
     transcripts,
     transcriptions,
     voice_governance,
@@ -65,6 +66,7 @@ def create_app() -> FastAPI:
     app.include_router(voice_governance.router, prefix=prefix)
     app.include_router(intelligence.router, prefix=prefix)
     app.include_router(collaboration.router, prefix=prefix)
+    app.include_router(release.router, prefix=prefix)
     app.include_router(audit.router, prefix=prefix)
     app.include_router(jobs.router, prefix=prefix)
 
