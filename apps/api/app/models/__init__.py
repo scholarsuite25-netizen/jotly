@@ -45,6 +45,14 @@ from app.models.speech import (
     SpeechChunk,
     SpeechProject,
 )
+from app.models.voice_governance import (
+    VoiceAuditEvent,
+    VoiceConsent,
+    VoiceJob,
+    VoicePermission,
+    VoiceProfile,
+    VoiceSample,
+)
 
 __all__ = [
     "AudioAsset",
@@ -81,5 +89,11 @@ __all__ = [
     "TranscriptSpeaker",
     "User",
     "UserRole",
+    "VoiceAuditEvent",
+    "VoiceConsent",
+    "VoiceJob",
+    "VoicePermission",
+    "VoiceProfile",
+    "VoiceSample",
     "Workspace",
 ]
