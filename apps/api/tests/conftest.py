@@ -14,6 +14,7 @@ import app.models.documents  # noqa: F401
 import app.models.speech  # noqa: F401
 import app.models.voice_governance  # noqa: F401
 import app.models.intelligence  # noqa: F401
+import app.models.collaboration  # noqa: F401
 import app.models.transcription  # noqa: F401
 
 
