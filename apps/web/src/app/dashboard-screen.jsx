@@ -122,16 +122,33 @@ export default function DashboardScreen({
           setError("No media asset found for this meeting. Record or upload media first.");
           return;
         }
-        const body = await authenticatedFetch(
-          `${apiBaseUrl}/meetings/${meetingId}/media/${firstAsset.id}/transcriptions`,
+        const queued = await authenticatedFetch(
+          `${apiBaseUrl}/media/${firstAsset.id}/transcriptions`,
           {
             method: "POST",
             headers: headers(),
             body: JSON.stringify({ language_code: "en", enable_diarisation: false }),
           }
         );
-        const tid = body.transcript_id;
-        setNotice(`Transcription ${body.status || "queued"} (transcript ${tid}).`);
+        let tid = queued.transcript_id || null;
+        let status = queued.status || "queued";
+        if (!tid && queued.job_id) {
+          const executed = await authenticatedFetch(
+            `${apiBaseUrl}/media/${firstAsset.id}/transcriptions/${queued.job_id}/execute`,
+            {
+              method: "POST",
+              headers: headers(),
+              body: JSON.stringify({ language_code: "en", enable_diarisation: false }),
+            }
+          );
+          tid = executed.transcript_id || null;
+          status = executed.status || status;
+        }
+        setNotice(
+          tid
+            ? `Transcription ${status} (transcript ${tid}).`
+            : `Transcription ${status}.`
+        );
         if (tid && onOpenTranscript) {
           await onOpenTranscript(tid);
         }
