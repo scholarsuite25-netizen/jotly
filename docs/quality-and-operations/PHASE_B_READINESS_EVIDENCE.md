@@ -49,17 +49,19 @@ Executed against `https://jotly-sigma.vercel.app/api/v1` (authenticated tenant a
 ## 4. In-browser UI smoke (partial, evidenced)
 
 Verified on `https://jotly-sigma.vercel.app` (authenticated session):
-- Dashboard rendered for `samuel@jotly.org.ng` / organisation **Jotly** with **Create meeting**, **Open transcript**, and **Meetings** sections.
+- Dashboard rendered for `samuel@jotly.org.ng` / organisation **Jotly** with **Create meeting**, **Open transcript**, and **Meetings** sections (including transcript handoff helper text in latest UI).
 - Meeting creation action performed in UI; backend confirms meeting present: titles include `["Browser UI Smoke Meeting","E2E Upload Test","Smoke Test Meeting"]`.
+- Recorder UI reached for **Browser UI Smoke Meeting** via **Record** action: recording-notice dialog/state displayed with host confirmation control. A UI defect (missing Bearer token on recorder notice/upload requests causing `Missing Bearer authentication token`) was identified and fixed in `apps/web/src/app/recorder-screen.jsx` (commit `c470bc0`, deployed `dpl_2e2p9wTjLWdSk11JcvRcZXa4nLcG`, READY); successful post-fix notice confirmation state transition requires manual browser confirmation.
 - Transcript editor opened for `7cf0db4b-7ec4-4119-946f-a41b3c60f0dd`, showing detected language/model, find/replace, editable segment with undo, and TXT/SRT/VTT export controls.
 
 **Not fully automated/evidenced in-browser (manual confirmation required):** live microphone permission/capture → in-browser record/upload flow and a complete single-pass click-through including media playback and export download in the browser UI. Browser automation in this environment was limited by UI re-renders/stale element refs; pipeline correctness is corroborated by production API E2E above.
 
 ## 5. Deployment/configuration notes (Vercel-first)
 
-- Monorepo routing via `vercel.json` (`/api/*` → `apps/api`, `/*` → `apps/web`), production deployment ready (commit lineage includes `ab848ed`, `c60b2e5`, `f00b74c`, `baaf645`, `47110fb`, `1403052`, `b69c391`).
+- Monorepo routing via `vercel.json` (`/api/*` → `apps/api`, `/*` → `apps/web`), production deployment ready (latest relevant commits include `c470bc0`, `fe8fca3`, `ab848ed`, `c60b2e5`, `f00b74c`, `baaf645`).
 - Backend configured with Supabase DB/JWT and S3-compatible storage env vars; `EMAIL_DRY_RUN=true` in current Vercel config. Frontend uses inlined `NEXT_PUBLIC_*` and same-origin `/api/v1` base.
 - Health endpoint OK; auth (`/api/v1/me`) resolves server-side tenant membership.
+- API contract inventory: `GET /api/v1/release/openapi-contract-summary` → `endpoint_count: 72` (authenticated admin).
 
 ## 6. Gaps and outstanding items (Phase B)
 
