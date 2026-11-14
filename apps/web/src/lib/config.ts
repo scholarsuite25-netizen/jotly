@@ -22,11 +22,18 @@ const FALLBACK_SUPABASE_URL = "https://izxneacavxfcjklnsftd.supabase.co";
 const FALLBACK_SUPABASE_ANON_KEY =
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml6eG5lYWNhdnhmY2prbG5zZnRkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTQ2MjAzMzAsImV4cCI6MjExMDE5NjMzMH0.FB-AlPLgP3krMMJncz4OMeee1LKehtChBecdNJzCIsU";
 
-export function getClientConfig(env: Record<string, string | undefined> = {}): NexusClientConfig {
+export function getClientConfig(env?: Record<string, string | undefined>): NexusClientConfig {
+  // Read NEXT_PUBLIC_* directly so Next.js can inline them at build time in client bundles.
+  const envApiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || env?.NEXT_PUBLIC_API_BASE_URL;
+  const envSupabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || env?.NEXT_PUBLIC_SUPABASE_URL;
+  const envSupabaseAnonKey =
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || env?.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
   return {
-    apiBaseUrl: (env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000/api/v1").replace(/\/+$/, ""),
-    supabaseUrl: env.NEXT_PUBLIC_SUPABASE_URL || FALLBACK_SUPABASE_URL,
-    supabaseAnonKey: env.NEXT_PUBLIC_SUPABASE_ANON_KEY || FALLBACK_SUPABASE_ANON_KEY,
+    // Same-origin /api routing (Vercel monorepo) is the safe default for deployed environments.
+    apiBaseUrl: (envApiBaseUrl || "/api/v1").replace(/\/+$/, ""),
+    supabaseUrl: envSupabaseUrl || FALLBACK_SUPABASE_URL,
+    supabaseAnonKey: envSupabaseAnonKey || FALLBACK_SUPABASE_ANON_KEY,
     // Hard-locked false on client until Phase 6 server-side governance gates pass
     voiceCloningEnabled: false,
   };
