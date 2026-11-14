@@ -34,9 +34,10 @@ Use the stack explicitly established in the current repository and blueprint. Do
 
 ## Current work snapshot
 Keep this section updated by the project owner or lead agent:
-- Current release/milestone: Phases 1–9 implementation complete (release-ready pending owner-operated gates).
-- Active branch: `main` (all phase branches merged via no-ff merge commits).
+- Current release/milestone: Phase 10 — Frontend UI foundation (Completed). Phases 1–9 implemented and merged.
+- Active branch: `feat/phase-10-frontend-ui` (to merge into `main`)
 - Approved delivery & hosting path: OpenCode → GitHub (CI/CD, SDLC gates) → Vercel (`apps/web`) + Cloudflare (Backend Edge/WAF/Tunnel/R2) + Hostinger VPS Self-Hosting (`apps/api`, workers, PostgreSQL/Redis) + Supabase Auth + Multi-Provider Email (Resend, Emailbump, Unipost).
+- Frontend UI screens added (Phase 10): sign-in screen (Supabase Auth via lib adapter, server-verified), organisation selection view model, dashboard (meeting list + signed playback links), recorder screen (notice gate → capture → resumable chunked upload), transcript editor screen (segment edit/undo, speaker relabel rendered as model suggestion, find/replace, TXT/SRT/VTT downloads). Auth-session lib adds token storage + client-side expiry preview (server remains the only authority).
 - Implemented features:
   - Phase 1: Secure Foundation (Supabase Auth JWT verification, multi-tenant RBAC, PostgreSQL RLS baseline, tamper-evident hash-chained audit, Resend/Emailbump/Unipost email adapter, GitHub Actions SDLC gates).
   - Phase 2: Recording and Media (meetings + participant roster, recording-notice gate, recorder state machine, resumable chunked uploads with checksum & magic-byte validation, private tenant storage, media validation worker, short-lived signed playback URLs).
