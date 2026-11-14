@@ -17,8 +17,8 @@ export default function HomePage() {
   const config = getClientConfig(process.env);
   const apiBaseUrl = config.apiBaseUrl;
 
-  const [phase, setPhase] = useState("checking"); // checking | signed_out | ready
-  const [identity, setIdentity] = useState(null);
+  const [phase, setPhase] = useState<"checking" | "signed_out" | "ready">("checking");
+  const [identity, setIdentity] = useState<any>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -44,7 +44,7 @@ export default function HomePage() {
     };
   }, [apiBaseUrl]);
 
-  const handleAuthenticated = useCallback((me) => {
+  const handleAuthenticated = useCallback((me: any) => {
     setIdentity(me);
     setPhase("ready");
   }, []);
