@@ -11,6 +11,7 @@ import app.models.foundation  # noqa: F401
 import app.models.meetings_media  # noqa: F401
 import app.models.transcription  # noqa: F401
 import app.models.documents  # noqa: F401
+import app.models.speech  # noqa: F401
 import app.models.transcription  # noqa: F401
 
 

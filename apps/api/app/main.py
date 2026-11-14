@@ -14,6 +14,7 @@ from app.routers import (
     media,
     meetings,
     organisations,
+    speech,
     transcripts,
     transcriptions,
 )
@@ -56,9 +57,10 @@ def create_app() -> FastAPI:
     app.include_router(exports_evaluation.router, prefix=prefix)
     app.include_router(documents.router, prefix=prefix)
     app.include_router(documents.transcript_ingest_router, prefix=prefix)
+    app.include_router(speech.router, prefix=prefix)
+    app.include_router(speech.audio_router, prefix=prefix)
     app.include_router(audit.router, prefix=prefix)
     app.include_router(jobs.router, prefix=prefix)
-    app.include_router(transcripts.router, prefix=prefix)
 
     return app
 
