@@ -17,17 +17,26 @@ jobs:
       - uses: actions/checkout@v4
       - name: Verify no .env files or private keys are tracked
         run: |
-          if git ls-files | grep -E '(^|/)\.env($|\.)' | grep -v '\.env\.example$'; then
+          set +e
+          tracked_env="$(git ls-files | grep -E '(^|/)\.env($|\.)' | grep -v '\.env\.example$')"
+          if [ -n "$tracked_env" ]; then
             echo "ERROR: Tracked .env file detected!"
+            echo "$tracked_env"
             exit 1
           fi
-          if git grep -E 'BEGIN (RSA|EC|OPENSSH|PRIVATE) KEY'; then
+          # Look for real PEM key blocks (with dashes); the literal marker string in
+          # privacy-guard source code is intentional and must not trigger a failure.
+          pem_hits="$(git grep -nE -- '-----BEGIN (RSA |EC |OPENSSH |DSA )?PRIVATE KEY-----' || true)"
+          if [ -n "$pem_hits" ]; then
             echo "ERROR: Private key material detected in repository!"
+            echo "$pem_hits"
             exit 1
           fi
+          echo "OK: no tracked .env files and no private key material."
       - name: Verify Voice Cloning remains disabled by default in config
         run: |
           grep -q "VOICE_CLONING_ENABLED=false" .env.example
+          echo "OK: voice cloning gate locked off in .env.example"
 
   backend-test-and-audit-gate:
     name: "Gate 2: FastAPI Backend, RLS Isolation, Email Failover & Audit Chain Tests"
