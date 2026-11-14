@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useMemo, useState } from "react";
+import { getStoredSessionToken } from "@/lib/auth-session.mjs";
 import {
   RECORDER_STATES,
   computeMissingChunkIndices,
@@ -8,6 +9,18 @@ import {
   shouldWarnBeforeUnload,
   transitionRecorderState,
 } from "@/lib/recorder-state.mjs";
+
+function authHeaders(organisationHeaders) {
+  const token = getStoredSessionToken();
+  if (!token) {
+    throw new Error("Session expired. Please sign in again.");
+  }
+  return {
+    ...organisationHeaders(),
+    Authorization: `Bearer ${token}`,
+    "Content-Type": "application/json",
+  };
+}
 
 const CHUNK_SIZE_BYTES = 5 * 1024 * 1024;
 
@@ -48,7 +61,7 @@ export default function RecorderScreen({
     try {
       const resp = await fetch(`${apiBaseUrl}/meetings/${meetingId}/recording-notice-confirm`, {
         method: "POST",
-        headers: { ...organisationHeaders(), "Content-Type": "application/json" },
+        headers: authHeaders(organisationHeaders),
         body: JSON.stringify({ notice_version: noticeVersion, host_confirmed: true }),
       });
       if (!resp.ok) {
@@ -117,8 +130,7 @@ export default function RecorderScreen({
     const init = await fetch(`${apiBaseUrl}/meetings/${meetingId}/uploads`, {
       method: "POST",
       headers: {
-        ...organisationHeaders(),
-        "Content-Type": "application/json",
+        ...authHeaders(organisationHeaders),
         "Idempotency-Key": `${meetingId}:${expectedSha256}`,
       },
       body: JSON.stringify({
@@ -146,7 +158,7 @@ export default function RecorderScreen({
         `${apiBaseUrl}/meetings/${meetingId}/uploads/${session.upload_session_id}/chunks/${index}`,
         {
           method: "PUT",
-          headers: { ...organisationHeaders(), "Content-Type": "application/json" },
+          headers: authHeaders(organisationHeaders),
           body: JSON.stringify({
             data_base64: base64FromBytes(slice),
             sha256_checksum: checksum,
@@ -162,7 +174,7 @@ export default function RecorderScreen({
 
     const complete = await fetch(
       `${apiBaseUrl}/meetings/${meetingId}/uploads/${session.upload_session_id}/complete`,
-      { method: "POST", headers: { ...organisationHeaders(), "Content-Type": "application/json" } }
+      { method: "POST", headers: authHeaders(organisationHeaders) }
     );
     if (complete.ok) {
       dispatchState((prev) => transitionRecorderState(prev, { type: "UPLOAD_FINALIZED" }));
