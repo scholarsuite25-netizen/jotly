@@ -308,17 +308,27 @@ def upgrade() -> None:
         ["organisation_id", "media_asset_id"],
     )
 
-    bind = op.get_bind()
-    if bind.dialect.name == "postgresql":
+    from alembic import context as _ctx
+    if _ctx.is_offline_mode():
         for stmt in get_phase2_postgres_rls_upgrade_sql():
             op.execute(stmt)
+    else:
+        bind = op.get_bind()
+        if bind.dialect.name == "postgresql":
+            for stmt in get_phase2_postgres_rls_upgrade_sql():
+                op.execute(stmt)
 
 
 def downgrade() -> None:
-    bind = op.get_bind()
-    if bind.dialect.name == "postgresql":
+    from alembic import context as _ctx
+    if _ctx.is_offline_mode():
         for stmt in get_phase2_postgres_rls_downgrade_sql():
             op.execute(stmt)
+    else:
+        bind = op.get_bind()
+        if bind.dialect.name == "postgresql":
+            for stmt in get_phase2_postgres_rls_downgrade_sql():
+                op.execute(stmt)
 
     op.drop_table("media_processing_jobs")
     op.drop_table("media_derivatives")

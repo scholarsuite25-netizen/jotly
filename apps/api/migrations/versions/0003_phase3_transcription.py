@@ -284,17 +284,27 @@ def upgrade() -> None:
     )
     op.create_index("ix_transcript_exports_org_tx", "transcript_exports", ["organisation_id", "transcript_id"])
 
-    bind = op.get_bind()
-    if bind.dialect.name == "postgresql":
+    from alembic import context as _ctx
+    if _ctx.is_offline_mode():
         for stmt in get_phase3_postgres_rls_upgrade_sql():
             op.execute(stmt)
+    else:
+        bind = op.get_bind()
+        if bind.dialect.name == "postgresql":
+            for stmt in get_phase3_postgres_rls_upgrade_sql():
+                op.execute(stmt)
 
 
 def downgrade() -> None:
-    bind = op.get_bind()
-    if bind.dialect.name == "postgresql":
+    from alembic import context as _ctx
+    if _ctx.is_offline_mode():
         for stmt in get_phase3_postgres_rls_downgrade_sql():
             op.execute(stmt)
+    else:
+        bind = op.get_bind()
+        if bind.dialect.name == "postgresql":
+            for stmt in get_phase3_postgres_rls_downgrade_sql():
+                op.execute(stmt)
 
     op.drop_table("transcript_exports")
     op.drop_table("transcript_revisions")

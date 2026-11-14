@@ -245,17 +245,27 @@ def upgrade() -> None:
     )
     op.create_index("ix_voice_audit_org_profile", "voice_audit_events", ["organisation_id", "voice_profile_id"])
 
-    bind = op.get_bind()
-    if bind.dialect.name == "postgresql":
+    from alembic import context as _ctx
+    if _ctx.is_offline_mode():
         for stmt in get_phase6_postgres_rls_upgrade_sql():
             op.execute(stmt)
+    else:
+        bind = op.get_bind()
+        if bind.dialect.name == "postgresql":
+            for stmt in get_phase6_postgres_rls_upgrade_sql():
+                op.execute(stmt)
 
 
 def downgrade() -> None:
-    bind = op.get_bind()
-    if bind.dialect.name == "postgresql":
+    from alembic import context as _ctx
+    if _ctx.is_offline_mode():
         for stmt in get_phase6_postgres_rls_downgrade_sql():
             op.execute(stmt)
+    else:
+        bind = op.get_bind()
+        if bind.dialect.name == "postgresql":
+            for stmt in get_phase6_postgres_rls_downgrade_sql():
+                op.execute(stmt)
 
     op.drop_table("voice_audit_events")
     op.drop_table("voice_jobs")

@@ -158,10 +158,105 @@ class PrivateObjectStorageAdapter:
         return object_key in self._objects
 
 
-_storage_singleton = PrivateObjectStorageAdapter()
+class S3ObjectStorageAdapter:
+    """
+    Production S3-compatible storage adapter (Supabase Storage S3 endpoint,
+    Cloudflare R2, or MinIO) using boto3 with a custom endpoint URL.
+
+    Enforces the same strict tenant key prefixing as the in-memory adapter,
+    so all tenant-isolation guarantees are preserved across backends.
+    """
+
+    def __init__(
+        self,
+        *,
+        endpoint_url: str,
+        access_key_id: str,
+        secret_access_key: str,
+        bucket_name: str,
+        region_name: str = "us-east-1",
+    ) -> None:
+        import boto3  # deferred import; installed via pyproject/requirements
+
+        self._bucket = bucket_name
+        self._client = boto3.client(
+            "s3",
+            endpoint_url=endpoint_url,
+            aws_access_key_id=access_key_id,
+            aws_secret_access_key=secret_access_key,
+            region_name=region_name,
+            config=__import__("botocore.config", fromlist=["Config"]).Config(
+                s3={"addressing_style": "path"}
+            ),
+        )
+
+    @staticmethod
+    def _assert_tenant_key_prefix(organisation_id: str, object_key: str) -> None:
+        expected_prefix = f"tenants/{organisation_id}/"
+        if not object_key.startswith(expected_prefix) or ".." in object_key:
+            raise PermissionError(
+                f"Storage tenant isolation violation: key '{object_key}' "
+                f"outside tenant prefix '{expected_prefix}'."
+            )
+
+    def put_bytes(
+        self, *, organisation_id: str, object_key: str, data: bytes
+    ) -> str:
+        self._assert_tenant_key_prefix(organisation_id, object_key)
+        self._client.put_object(
+            Bucket=self._bucket, Key=object_key, Body=bytes(data)
+        )
+        return hashlib.sha256(data).hexdigest()
+
+    def get_bytes(self, *, organisation_id: str, object_key: str) -> bytes:
+        self._assert_tenant_key_prefix(organisation_id, object_key)
+        try:
+            response = self._client.get_object(Bucket=self._bucket, Key=object_key)
+            return response["Body"].read()
+        except self._client.exceptions.NoSuchKey as exc:
+            raise NexusAPIError(
+                status_code=404,
+                code="storage_object_not_found",
+                message="Requested media object does not exist in private storage.",
+            ) from exc
+
+    def exists(self, *, organisation_id: str, object_key: str) -> bool:
+        self._assert_tenant_key_prefix(organisation_id, object_key)
+        try:
+            self._client.head_object(Bucket=self._bucket, Key=object_key)
+            return True
+        except self._client.exceptions.ClientError:
+            return False
 
 
-def get_private_storage() -> PrivateObjectStorageAdapter:
+_storage_singleton: PrivateObjectStorageAdapter | S3ObjectStorageAdapter | None = None
+
+
+def get_private_storage() -> PrivateObjectStorageAdapter | S3ObjectStorageAdapter:
+    """
+    Storage factory: real S3-compatible storage when fully configured
+    (production/Vercel), otherwise the in-memory adapter (local tests, CI).
+    """
+    global _storage_singleton
+    if _storage_singleton is not None:
+        return _storage_singleton
+
+    settings = get_settings()
+    if (
+        settings.s3_endpoint_url
+        and settings.s3_access_key_id
+        and settings.s3_secret_access_key
+        and settings.s3_bucket_media
+    ):
+        _storage_singleton = S3ObjectStorageAdapter(
+            endpoint_url=settings.s3_endpoint_url,
+            access_key_id=settings.s3_access_key_id,
+            secret_access_key=settings.s3_secret_access_key,
+            bucket_name=settings.s3_bucket_media,
+            region_name=settings.s3_region,
+        )
+    else:
+        _storage_singleton = PrivateObjectStorageAdapter()
     return _storage_singleton
 
 

@@ -282,17 +282,27 @@ def upgrade() -> None:
     )
     op.create_index("ix_ai_job_logs_org_job", "ai_job_logs", ["organisation_id", "background_job_id"])
 
-    bind = op.get_bind()
-    if bind.dialect.name == "postgresql":
+    from alembic import context as _ctx
+    if _ctx.is_offline_mode():
         for stmt in get_phase7_postgres_rls_upgrade_sql():
             op.execute(stmt)
+    else:
+        bind = op.get_bind()
+        if bind.dialect.name == "postgresql":
+            for stmt in get_phase7_postgres_rls_upgrade_sql():
+                op.execute(stmt)
 
 
 def downgrade() -> None:
-    bind = op.get_bind()
-    if bind.dialect.name == "postgresql":
+    from alembic import context as _ctx
+    if _ctx.is_offline_mode():
         for stmt in get_phase7_postgres_rls_downgrade_sql():
             op.execute(stmt)
+    else:
+        bind = op.get_bind()
+        if bind.dialect.name == "postgresql":
+            for stmt in get_phase7_postgres_rls_downgrade_sql():
+                op.execute(stmt)
 
     op.drop_table("ai_job_logs")
     op.drop_table("evidence_links")

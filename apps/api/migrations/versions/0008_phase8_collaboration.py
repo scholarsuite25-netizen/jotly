@@ -237,17 +237,27 @@ def upgrade() -> None:
         ["organisation_id", "provider"],
     )
 
-    bind = op.get_bind()
-    if bind.dialect.name == "postgresql":
+    from alembic import context as _ctx
+    if _ctx.is_offline_mode():
         for stmt in get_phase8_postgres_rls_upgrade_sql():
             op.execute(stmt)
+    else:
+        bind = op.get_bind()
+        if bind.dialect.name == "postgresql":
+            for stmt in get_phase8_postgres_rls_upgrade_sql():
+                op.execute(stmt)
 
 
 def downgrade() -> None:
-    bind = op.get_bind()
-    if bind.dialect.name == "postgresql":
+    from alembic import context as _ctx
+    if _ctx.is_offline_mode():
         for stmt in get_phase8_postgres_rls_downgrade_sql():
             op.execute(stmt)
+    else:
+        bind = op.get_bind()
+        if bind.dialect.name == "postgresql":
+            for stmt in get_phase8_postgres_rls_downgrade_sql():
+                op.execute(stmt)
 
     op.drop_table("integration_events")
     op.drop_table("action_assignments")

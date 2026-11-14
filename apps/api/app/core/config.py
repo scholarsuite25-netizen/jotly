@@ -30,6 +30,15 @@ class Settings(BaseSettings):
     )
     db_echo: bool = Field(default=False, alias="DB_ECHO")
 
+    # Object storage (S3-compatible: Supabase Storage S3 / Cloudflare R2 / MinIO).
+    # When all four are configured, the real S3 adapter is used; otherwise the
+    # in-memory adapter serves local tests and CI.
+    s3_endpoint_url: str = Field(default="", alias="S3_ENDPOINT_URL")
+    s3_access_key_id: str = Field(default="", alias="S3_ACCESS_KEY_ID")
+    s3_secret_access_key: str = Field(default="", alias="S3_SECRET_ACCESS_KEY")
+    s3_bucket_media: str = Field(default="", alias="S3_BUCKET_MEDIA")
+    s3_region: str = Field(default="us-east-1", alias="S3_REGION")
+
     # Supabase Auth (OIDC/JWT)
     supabase_url: str = Field(
         default="https://example-project.supabase.co",
@@ -95,6 +104,14 @@ class Settings(BaseSettings):
                 "identity verification, licensing, and security gates are approved."
             )
         return False
+
+    @field_validator("database_url")
+    @classmethod
+    def normalize_database_url_scheme(cls, value: str) -> str:
+        """Accepts standard PostgreSQL URLs (e.g. from Supabase) and maps them to the psycopg driver."""
+        if value.startswith("postgresql://"):
+            return value.replace("postgresql://", "postgresql+psycopg://", 1)
+        return value
 
     @property
     def allowed_origins_list(self) -> list[str]:

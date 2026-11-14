@@ -70,6 +70,19 @@ Use one section per material decision. Keep accepted decisions stable; supersede
   3. **Tamper-Evident Audit Architecture:** Every sensitive action writes an immutable `AuditLog` record containing `actor_id`, `organisation_id`, `action`, `resource_type`, `resource_id`, `result`, `correlation_id`, sanitised metadata, `previous_hash`, and `entry_hash` (`SHA-256` cryptographic hash chain per organisation) with an integrity verification routine (`verify_audit_chain`) to detect any unauthorized tampering.
 - **Validation required:** Automated test suite execution and audit chain tamper-detection tests.
 
+## ADR-006 — Vercel-First Full Deployment (backend included), Self-Hosting Later
+- **Status:** Accepted (owner decision, supersedes the deployment sequencing in ADR-001 without changing the long-term target)
+- **Date:** 2026-11-14
+- **Owner:** Project Owner
+- **Context:** Owner wants a complete running system on Vercel first for full testing, with possible migration to self-hosting (Hostinger) later. Serverless constraints require code changes: real object storage, hosted PostgreSQL, and no worker-process assumptions.
+- **Decision:**
+  1. Deploy BOTH services on Vercel: `web` (Next.js) and `api` (FastAPI), routed via root `vercel.json` services config (`/api/(.*)` → api, `/(.*)` → web, same origin — no CORS).
+  2. **PostgreSQL = Supabase Postgres** (owner already has the project): DATABASE_URL via Supabase connection pooler; RLS policies applied via a generated SQL script pasted into the Supabase SQL Editor.
+  3. **Object storage = Supabase Storage S3-compatible endpoint** (private bucket), replacing the in-memory test adapter when S3 env vars are present. In-memory adapter remains the CI/default fallback.
+  4. Background job rows execute inline within requests (current design) — valid under serverless for stub adapters; real model inference (faster-whisper, OCR, TTS weights) remains deferred to the self-hosting phase and is NOT claimed to work on Vercel.
+- **Consequences:** Fast end-to-end testing on one platform; media persistence and RLS become genuinely live. Model-weight phases (3–7 production accuracy) still require self-hosted compute later. No binding variables needed — the frontend calls the API from the browser at the same origin.
+- **Validation required:** Vercel build success for both services; live RLS verification against Supabase Postgres; end-to-end upload → transcribe → export flow in production.
+
 ## ADR template
 
 ### ADR-XXX — [Decision title]
