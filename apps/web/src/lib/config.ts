@@ -24,13 +24,13 @@ const FALLBACK_SUPABASE_ANON_KEY =
 
 export function getClientConfig(env?: Record<string, string | undefined>): NexusClientConfig {
   // Read NEXT_PUBLIC_* directly so Next.js can inline them at build time in client bundles.
+  // Default to same-origin /api/v1 for Vercel monorepo deployments.
   const envApiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || env?.NEXT_PUBLIC_API_BASE_URL;
   const envSupabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || env?.NEXT_PUBLIC_SUPABASE_URL;
   const envSupabaseAnonKey =
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || env?.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
   return {
-    // Same-origin /api routing (Vercel monorepo) is the safe default for deployed environments.
     apiBaseUrl: (envApiBaseUrl || "/api/v1").replace(/\/+$/, ""),
     supabaseUrl: envSupabaseUrl || FALLBACK_SUPABASE_URL,
     supabaseAnonKey: envSupabaseAnonKey || FALLBACK_SUPABASE_ANON_KEY,
