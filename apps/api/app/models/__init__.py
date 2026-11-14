@@ -38,8 +38,17 @@ from app.models.documents import (
     DocumentTemplate,
     DocumentVersion,
 )
+from app.models.speech import (
+    AudioAsset,
+    AudioChapter,
+    PronunciationEntry,
+    SpeechChunk,
+    SpeechProject,
+)
 
 __all__ = [
+    "AudioAsset",
+    "AudioChapter",
     "AuditLog",
     "BackgroundJob",
     "Department",
@@ -58,10 +67,13 @@ __all__ = [
     "MeetingParticipant",
     "Organisation",
     "Permission",
+    "PronunciationEntry",
     "Role",
     "RolePermission",
     "SessionRecord",
     "SpeakerLabel",
+    "SpeechChunk",
+    "SpeechProject",
     "Transcript",
     "TranscriptExport",
     "TranscriptRevision",
