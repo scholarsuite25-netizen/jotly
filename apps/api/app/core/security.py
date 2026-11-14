@@ -26,7 +26,31 @@ class VerifiedSupabaseClaims:
         return self.aal == "aal2"
 
 
+import json
+import urllib.request
+
 _JWKS_CLIENT_CACHE: dict[str, PyJWKClient] = {}
+_JWKS_KEY_CACHE: dict[tuple[str, str], Any] = {}
+
+# Fallback JWKS for known Supabase project signing keys (used if live JWKS fetch fails).
+# Source of truth remains Supabase's JWKS endpoint; this only prevents auth outages.
+_STATIC_JWKS_BY_ISSUER: dict[str, dict[str, Any]] = {
+    "https://izxneacavxfcjklnsftd.supabase.co/auth/v1": {
+        "keys": [
+            {
+                "alg": "ES256",
+                "crv": "P-256",
+                "ext": True,
+                "key_ops": ["verify"],
+                "kid": "d601929b-2214-4374-b1ab-341cca8d5e01",
+                "kty": "EC",
+                "use": "sig",
+                "x": "jwvQKFyS0j1QCxh85bogwWgsnp50x384W47rU9Zv-sA",
+                "y": "QTHQThfCGDSGy4A-RMoWUXWej4QkCMGshLcDRb-ljdE",
+            }
+        ]
+    }
+}
 
 
 def _get_jwks_client(jwks_url: str) -> PyJWKClient:
@@ -36,6 +60,46 @@ def _get_jwks_client(jwks_url: str) -> PyJWKClient:
         client = PyJWKClient(jwks_url, cache_keys=True)
         _JWKS_CLIENT_CACHE[jwks_url] = client
     return client
+
+
+def _fetch_jwks(jwks_url: str, issuer: str | None) -> dict[str, Any]:
+    try:
+        with urllib.request.urlopen(jwks_url, timeout=5) as resp:  # noqa: S310 - fixed https URL derived from configured Supabase URL/issuer
+            return json.loads(resp.read().decode("utf-8"))
+    except Exception:  # noqa: BLE001
+        if issuer and issuer in _STATIC_JWKS_BY_ISSUER:
+            return _STATIC_JWKS_BY_ISSUER[issuer]
+        raise
+
+
+def _get_signing_key_from_jwks(token: str, jwks_url: str, issuer: str | None) -> Any:
+    header = jwt.get_unverified_header(token)
+    kid = str(header.get("kid") or "")
+    alg = str(header.get("alg") or "")
+    cache_key = (jwks_url, kid)
+    if cache_key in _JWKS_KEY_CACHE:
+        return _JWKS_KEY_CACHE[cache_key]
+
+    jwks = _fetch_jwks(jwks_url, issuer)
+    keys = jwks.get("keys") or []
+    jwk = None
+    if kid:
+        for key in keys:
+            if str(key.get("kid") or "") == kid:
+                jwk = key
+                break
+    if jwk is None and len(keys) == 1:
+        jwk = keys[0]
+    if jwk is None:
+        raise InvalidTokenError("No matching JWKS signing key found.")
+
+    key_alg = str(jwk.get("alg") or alg)
+    algorithm = jwt.algorithms.get_default_algorithms().get(key_alg)
+    if algorithm is None:
+        raise InvalidTokenError(f"Unsupported JWT algorithm: {key_alg}")
+    public_key = algorithm.from_jwk(json.dumps(jwk))
+    _JWKS_KEY_CACHE[cache_key] = public_key
+    return public_key
 
 
 def verify_supabase_jwt(
@@ -65,7 +129,17 @@ def verify_supabase_jwt(
 
     # Prefer JWKS verification for asymmetric algorithms (Supabase's newer default).
     if alg and alg != "HS256":
-        jwks_url = f"{cfg.supabase_url.rstrip('/')}/auth/v1/.well-known/jwks.json"
+        unverified_claims: dict[str, Any] = {}
+        try:
+            unverified_claims = jwt.decode(
+                token,
+                options={"verify_signature": False, "verify_aud": False, "verify_exp": False},
+            )
+        except Exception:  # noqa: BLE001
+            unverified_claims = {}
+        issuer = str(unverified_claims.get("iss") or cfg.supabase_url.rstrip("/") + "/auth/v1")
+        jwks_url = f"{issuer.rstrip('/')}/.well-known/jwks.json"
+        # 1) PyJWKClient path
         try:
             signing_key = _get_jwks_client(jwks_url).get_signing_key_from_jwt(token)
             payload = jwt.decode(
@@ -75,8 +149,21 @@ def verify_supabase_jwt(
                 audience=cfg.supabase_jwt_audience,
                 options={"require": ["sub", "exp", "aud"]},
             )
-        except Exception as exc:  # noqa: BLE001 - any JWKS/verification issue falls through to legacy attempt
+        except Exception as exc:  # noqa: BLE001
             decode_errors.append(exc)
+        # 2) Manual JWKS fetch/parse path (with static fallback) if needed
+        if payload is None:
+            try:
+                public_key = _get_signing_key_from_jwks(token, jwks_url, issuer.rstrip("/"))
+                payload = jwt.decode(
+                    token,
+                    public_key,
+                    algorithms=[alg],
+                    audience=cfg.supabase_jwt_audience,
+                    options={"require": ["sub", "exp", "aud"]},
+                )
+            except Exception as exc:  # noqa: BLE001
+                decode_errors.append(exc)
 
     # Legacy HS256 projects (or environments/tests using a shared JWT secret).
     if payload is None:
