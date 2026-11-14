@@ -44,11 +44,35 @@ export default function RecorderScreen({
 
   const warn = shouldWarnBeforeUnload(state);
 
-  const confirmNotice = useCallback(() => {
-    dispatchState((prev) =>
-      transitionRecorderState(prev, { type: "CONFIRM_NOTICE", noticeVersion })
-    );
-  }, [noticeVersion]);
+  const confirmNotice = useCallback(async () => {
+    try {
+      const resp = await fetch(`${apiBaseUrl}/meetings/${meetingId}/recording-notice-confirm`, {
+        method: "POST",
+        headers: { ...organisationHeaders(), "Content-Type": "application/json" },
+        body: JSON.stringify({ notice_version: noticeVersion, host_confirmed: true }),
+      });
+      if (!resp.ok) {
+        let message = "Failed to confirm recording notice.";
+        try {
+          const body = await resp.json();
+          if (body && body.error && body.error.message) message = body.error.message;
+        } catch {
+          // ignore parse errors
+        }
+        dispatchState((prev) => ({ ...prev, state: "failed", errorMessage: message }));
+        return;
+      }
+      dispatchState((prev) =>
+        transitionRecorderState(prev, { type: "CONFIRM_NOTICE", noticeVersion })
+      );
+    } catch (err) {
+      dispatchState((prev) => ({
+        ...prev,
+        state: "failed",
+        errorMessage: err.message || "Failed to confirm recording notice.",
+      }));
+    }
+  }, [apiBaseUrl, meetingId, noticeVersion, organisationHeaders]);
 
   const startRecording = useCallback(async () => {
     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -92,7 +116,11 @@ export default function RecorderScreen({
     const expectedSha256 = await sha256Hex(bytes);
     const init = await fetch(`${apiBaseUrl}/meetings/${meetingId}/uploads`, {
       method: "POST",
-      headers: { ...organisationHeaders(), "Idempotency-Key": `${meetingId}:${expectedSha256}` },
+      headers: {
+        ...organisationHeaders(),
+        "Content-Type": "application/json",
+        "Idempotency-Key": `${meetingId}:${expectedSha256}`,
+      },
       body: JSON.stringify({
         file_name: `meeting-${meetingId}.webm`,
         mime_type: "audio/webm",
@@ -118,7 +146,7 @@ export default function RecorderScreen({
         `${apiBaseUrl}/meetings/${meetingId}/uploads/${session.upload_session_id}/chunks/${index}`,
         {
           method: "PUT",
-          headers: organisationHeaders(),
+          headers: { ...organisationHeaders(), "Content-Type": "application/json" },
           body: JSON.stringify({
             data_base64: base64FromBytes(slice),
             sha256_checksum: checksum,
@@ -134,7 +162,7 @@ export default function RecorderScreen({
 
     const complete = await fetch(
       `${apiBaseUrl}/meetings/${meetingId}/uploads/${session.upload_session_id}/complete`,
-      { method: "POST", headers: organisationHeaders() }
+      { method: "POST", headers: { ...organisationHeaders(), "Content-Type": "application/json" } }
     );
     if (complete.ok) {
       dispatchState((prev) => transitionRecorderState(prev, { type: "UPLOAD_FINALIZED" }));

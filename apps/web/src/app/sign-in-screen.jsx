@@ -15,7 +15,7 @@ import {
  * If the backend API is not reachable yet (e.g., Hostinger step pending), the user
  * still gets a signed-in state with a clear notice instead of a hard error.
  */
-export default function SignInScreen({ supabaseClient, apiBaseUrl }) {
+export default function SignInScreen({ supabaseClient, apiBaseUrl, onAuthenticated }) {
   const [state, setState] = useState(createSignInState);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -44,6 +44,10 @@ export default function SignInScreen({ supabaseClient, apiBaseUrl }) {
               ? "Signed in, but the backend session check could not run yet."
               : "Signed in to Jotly. The meeting backend is not connected yet — it comes online at the Hostinger deployment step.";
         }
+        if (identity && typeof onAuthenticated === "function") {
+          onAuthenticated(identity);
+          return;
+        }
         setState((prev) => ({
           ...prev,
           state: SIGNIN_STATES.AUTHENTICATED,
@@ -59,7 +63,7 @@ export default function SignInScreen({ supabaseClient, apiBaseUrl }) {
         }));
       }
     },
-    [apiBaseUrl, email, password, supabaseClient]
+    [apiBaseUrl, email, onAuthenticated, password, supabaseClient]
   );
 
   const submitting = useMemo(() => state.state === SIGNIN_STATES.SUBMITTING, [state.state]);
