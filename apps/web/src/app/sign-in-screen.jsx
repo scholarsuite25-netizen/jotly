@@ -12,6 +12,8 @@ import {
  * Sign-in screen (client component).
  * Uses Supabase Auth via the injected client; on success hydrates /api/v1/me.
  * Server-side authorization remains the only authority — this screen carries no roles.
+ * If the backend API is not reachable yet (e.g., Hostinger step pending), the user
+ * still gets a signed-in state with a clear notice instead of a hard error.
  */
 export default function SignInScreen({ supabaseClient, apiBaseUrl }) {
   const [state, setState] = useState(createSignInState);
@@ -32,11 +34,21 @@ export default function SignInScreen({ supabaseClient, apiBaseUrl }) {
           }));
           return;
         }
-        const identity = await loadIdentity(apiBaseUrl);
+        let identity = null;
+        let backendNotice = null;
+        try {
+          identity = await loadIdentity(apiBaseUrl);
+        } catch (apiError) {
+          backendNotice =
+            apiError.code === "session_expired"
+              ? "Signed in, but the backend session check could not run yet."
+              : "Signed in to Jotly. The meeting backend is not connected yet — it comes online at the Hostinger deployment step.";
+        }
         setState((prev) => ({
           ...prev,
           state: SIGNIN_STATES.AUTHENTICATED,
           identity,
+          backendNotice,
           errorMessage: null,
         }));
       } catch (error) {
@@ -57,14 +69,19 @@ export default function SignInScreen({ supabaseClient, apiBaseUrl }) {
     return (
       <main>
         <h1>Welcome back</h1>
-        <p>Signed in as {state.identity.user.email}</p>
-        <ul aria-label="Organisation memberships">
-          {orgs.map((org) => (
-            <li key={org.id}>
-              {org.name} ({org.roles.join(", ")})
-            </li>
-          ))}
-        </ul>
+        <p>Signed in as {state.identity ? state.identity.user.email : "your account"}.</p>
+        {state.backendNotice ? (
+          <p role="status">{state.backendNotice}</p>
+        ) : null}
+        {orgs.length > 0 ? (
+          <ul aria-label="Organisation memberships">
+            {orgs.map((org) => (
+              <li key={org.id}>
+                {org.name} ({org.roles.join(", ")})
+              </li>
+            ))}
+          </ul>
+        ) : null}
       </main>
     );
   }
