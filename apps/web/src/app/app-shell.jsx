@@ -102,6 +102,13 @@ export default function AppShell({ apiBaseUrl, initialIdentity, onSignOut }) {
     if (onSignOut) onSignOut();
   }, [onSignOut]);
 
+  // Session expiry detected mid-flow: clear the stale token and return to
+  // sign-in instead of leaving the user on a broken authenticated screen.
+  const handleSessionExpired = useCallback(() => {
+    clearSessionToken();
+    if (onSignOut) onSignOut();
+  }, [onSignOut]);
+
   const openRecorder = useCallback((meetingId) => {
     setView({ name: "recorder", meetingId });
     setError(null);
@@ -222,6 +229,7 @@ export default function AppShell({ apiBaseUrl, initialIdentity, onSignOut }) {
           organisationName={activeOrgName}
           onOpenRecorder={openRecorder}
           onOpenTranscript={openTranscript}
+          onSessionExpired={handleSessionExpired}
         />
       ) : null}
 

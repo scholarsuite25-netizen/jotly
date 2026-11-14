@@ -2,9 +2,18 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { authenticatedFetch } from "@/lib/auth-session.mjs";
+import {
+  describeMedia,
+  describeTranscripts,
+  isSessionError,
+  selectLatestTranscript,
+  summariseMedia,
+} from "@/lib/meeting-status.mjs";
 
 /**
- * Dashboard screen: create/list meetings, open recorder, and access transcripts/media.
+ * Dashboard screen: create/list meetings with per-meeting media and transcript
+ * discovery (status + "open latest"), plus recorder/transcript hand-off.
+ * Session-expiry errors are surfaced to the shell for a clean re-auth.
  */
 export default function DashboardScreen({
   apiBaseUrl,
@@ -13,9 +22,11 @@ export default function DashboardScreen({
   organisationName,
   onOpenRecorder,
   onOpenTranscript,
+  onSessionExpired,
 }) {
   const [meetings, setMeetings] = useState([]);
   const [workspaces, setWorkspaces] = useState([]);
+  const [details, setDetails] = useState({});
   const [error, setError] = useState(null);
   const [notice, setNotice] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -26,6 +37,18 @@ export default function DashboardScreen({
   const [busyMeetingId, setBusyMeetingId] = useState(null);
 
   const headers = useCallback(() => organisationHeaders(), [organisationHeaders]);
+
+  const fail = useCallback(
+    (err) => {
+      if (isSessionError(err)) {
+        setError("Your session expired. Please sign in again.");
+        if (onSessionExpired) onSessionExpired();
+        return;
+      }
+      setError(err.message);
+    },
+    [onSessionExpired]
+  );
 
   const refresh = useCallback(async () => {
     setLoading(true);
@@ -46,12 +69,40 @@ export default function DashboardScreen({
       if (!workspaceId && wsItems.length > 0) {
         setWorkspaceId(wsItems[0].id);
       }
+
+      // Per-meeting discovery: media + transcripts (independent of the main list)
+      const entries = await Promise.all(
+        meetingItems.map(async (m) => {
+          try {
+            const [media, transcripts] = await Promise.all([
+              authenticatedFetch(`${apiBaseUrl}/meetings/${m.id}/media`, {
+                headers: headers(),
+              }),
+              authenticatedFetch(`${apiBaseUrl}/meetings/${m.id}/transcripts`, {
+                headers: headers(),
+              }),
+            ]);
+            return [
+              m.id,
+              {
+                media: summariseMedia(media.items || []),
+                transcripts: transcripts.items || [],
+                error: null,
+              },
+            ];
+          } catch (err) {
+            if (isSessionError(err)) throw err;
+            return [m.id, { media: null, transcripts: [], error: err.message }];
+          }
+        })
+      );
+      setDetails(Object.fromEntries(entries));
     } catch (err) {
-      setError(err.message);
+      fail(err);
     } finally {
       setLoading(false);
     }
-  }, [apiBaseUrl, headers, organisationId, workspaceId]);
+  }, [apiBaseUrl, fail, headers, organisationId, workspaceId]);
 
   useEffect(() => {
     refresh();
@@ -77,12 +128,12 @@ export default function DashboardScreen({
         setNotice("Meeting created.");
         await refresh();
       } catch (err) {
-        setError(err.message);
+        fail(err);
       } finally {
         setCreating(false);
       }
     },
-    [apiBaseUrl, headers, refresh, title, workspaceId]
+    [apiBaseUrl, fail, headers, refresh, title, workspaceId]
   );
 
   const getPlayback = useCallback(
@@ -102,10 +153,10 @@ export default function DashboardScreen({
         });
         window.open(pb.playback_url, "_blank", "noopener");
       } catch (err) {
-        setError(err.message);
+        fail(err);
       }
     },
-    [apiBaseUrl, headers]
+    [apiBaseUrl, fail, headers]
   );
 
   const startTranscription = useCallback(
@@ -155,45 +206,109 @@ export default function DashboardScreen({
         if (tid && onOpenTranscript) {
           await onOpenTranscript(tid);
         }
+        await refresh();
       } catch (err) {
-        setError(err.message);
+        fail(err);
       } finally {
         setBusyMeetingId(null);
       }
     },
-    [apiBaseUrl, headers, onOpenTranscript]
+    [apiBaseUrl, fail, headers, onOpenTranscript, refresh]
   );
 
   const openTranscriptById = useCallback(async () => {
     const id = transcriptIdInput.trim();
     if (!id || !onOpenTranscript) return;
     setError(null);
-    await onOpenTranscript(id);
-  }, [onOpenTranscript, transcriptIdInput]);
+    try {
+      await onOpenTranscript(id);
+    } catch (err) {
+      fail(err);
+    }
+  }, [fail, onOpenTranscript, transcriptIdInput]);
+
+  const openTranscript = useCallback(
+    async (transcriptId) => {
+      setError(null);
+      try {
+        await onOpenTranscript(transcriptId);
+      } catch (err) {
+        fail(err);
+      }
+    },
+    [fail, onOpenTranscript]
+  );
 
   const rows = useMemo(
     () =>
-      meetings.map((m) => (
-        <tr key={m.id}>
-          <td>{m.title}</td>
-          <td>{m.recording_state}</td>
-          <td>{m.notice_confirmed ? "confirmed" : "not confirmed"}</td>
-          <td>
-            <button type="button" onClick={() => onOpenRecorder && onOpenRecorder(m.id)}>
-              Record
-            </button>{" "}
-            <button type="button" onClick={() => getPlayback(m.id)}>Play</button>{" "}
-            <button
-              type="button"
-              onClick={() => startTranscription(m.id)}
-              disabled={busyMeetingId === m.id}
-            >
-              {busyMeetingId === m.id ? "Working…" : "Transcribe/Open"}
-            </button>
-          </td>
-        </tr>
-      )),
-    [busyMeetingId, getPlayback, meetings, onOpenRecorder, startTranscription]
+      meetings.map((m) => {
+        const detail = details[m.id] || {};
+        const mediaSummary = detail.media;
+        const transcripts = detail.transcripts || [];
+        const latest = selectLatestTranscript(transcripts);
+        return (
+          <tr key={m.id}>
+            <td>{m.title}</td>
+            <td>
+              {detail.error ? (
+                <span style={{ color: "#b00020" }}>Unavailable</span>
+              ) : mediaSummary ? (
+                describeMedia(mediaSummary)
+              ) : (
+                "Loading…"
+              )}
+            </td>
+            <td>
+              {transcripts.length === 0 ? (
+                <span>{detail.error ? "Unavailable" : describeTranscripts(transcripts)}</span>
+              ) : (
+                <>
+                  <span>{describeTranscripts(transcripts)}</span>{" "}
+                  {latest ? (
+                    <button type="button" onClick={() => openTranscript(latest.id)}>
+                      Open latest
+                    </button>
+                  ) : null}
+                  {transcripts.slice(0, 3).map((t) => (
+                    <button
+                      key={t.id}
+                      type="button"
+                      title={`Transcript ${t.id} (${t.status})`}
+                      onClick={() => openTranscript(t.id)}
+                    >
+                      Open {t.status}
+                    </button>
+                  ))}
+                </>
+              )}
+            </td>
+            <td>{m.recording_state}</td>
+            <td>{m.notice_confirmed ? "confirmed" : "not confirmed"}</td>
+            <td>
+              <button type="button" onClick={() => onOpenRecorder && onOpenRecorder(m.id)}>
+                Record
+              </button>{" "}
+              <button type="button" onClick={() => getPlayback(m.id)}>Play</button>{" "}
+              <button
+                type="button"
+                onClick={() => startTranscription(m.id)}
+                disabled={busyMeetingId === m.id}
+              >
+                {busyMeetingId === m.id ? "Working…" : "Transcribe/Open"}
+              </button>
+            </td>
+          </tr>
+        );
+      }),
+    [
+      busyMeetingId,
+      details,
+      getPlayback,
+      meetings,
+      onOpenRecorder,
+      openTranscript,
+      startTranscription,
+    ]
   );
 
   return (
@@ -232,7 +347,7 @@ export default function DashboardScreen({
 
       <section aria-label="Open transcript">
         <h2>Open transcript</h2>
-        <p>Paste a transcript ID, or use <strong>Transcribe/Open</strong> on a meeting to generate and auto-fill one.</p>
+        <p>Paste a transcript ID, or use <strong>Transcribe/Open</strong> / <strong>Open latest</strong> on a meeting.</p>
         <label htmlFor="transcript-id">Transcript ID</label>
         <input
           id="transcript-id"
@@ -252,11 +367,16 @@ export default function DashboardScreen({
         </button>
         {notice ? <p role="status">{notice}</p> : null}
         {error ? <p role="alert" style={{ color: "#b00020" }}>{error}</p> : null}
+        {meetings.length === 0 && !loading ? (
+          <p role="status">No meetings yet — create one above to get started.</p>
+        ) : null}
         <table>
           <caption>Meetings in the selected organisation</caption>
           <thead>
             <tr>
               <th scope="col">Title</th>
+              <th scope="col">Media</th>
+              <th scope="col">Transcripts</th>
               <th scope="col">Recording state</th>
               <th scope="col">Notice</th>
               <th scope="col">Actions</th>

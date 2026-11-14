@@ -367,3 +367,56 @@ def test_wer_evaluation_harness(client: TestClient) -> None:
 
     # Per-segment metrics present
     assert all("segment_wer" in s for s in body["segments"])
+
+
+def test_meeting_transcript_listing_and_tenant_isolation(client: TestClient) -> None:
+    """Dashboard discovery: list transcripts per meeting, empty state, 404, isolation."""
+    asset_id, headers = _create_meeting_and_asset(
+        client, "sub-tx-list", "txlist@org.example.com"
+    )
+    meeting_id = client.get("/api/v1/meetings", headers=headers).json()["items"][0]["id"]
+
+    # Empty before any transcription: UI can render an explicit empty state.
+    empty = client.get(f"/api/v1/meetings/{meeting_id}/transcripts", headers=headers)
+    assert empty.status_code == 200
+    assert empty.json()["items"] == []
+
+    queue_resp = client.post(
+        f"/api/v1/media/{asset_id}/transcriptions",
+        json={"language_code": "en", "enable_diarisation": False},
+        headers=headers,
+    )
+    exec_resp = client.post(
+        f"/api/v1/media/{asset_id}/transcriptions/{queue_resp.json()['job_id']}/execute",
+        json={"language_code": "en", "enable_diarisation": False},
+        headers=headers,
+    )
+    transcript_id = exec_resp.json()["transcript_id"]
+
+    listing = client.get(f"/api/v1/meetings/{meeting_id}/transcripts", headers=headers)
+    assert listing.status_code == 200
+    items = listing.json()["items"]
+    assert len(items) == 1
+    assert items[0]["id"] == transcript_id
+    assert items[0]["status"] == "completed"
+    assert items[0]["media_asset_id"] == asset_id
+
+    # Unknown meeting -> 404 (same contract as the media listing)
+    missing = client.get(
+        "/api/v1/meetings/00000000-0000-0000-0000-000000000000/transcripts",
+        headers=headers,
+    )
+    assert missing.status_code == 404
+
+    # Cross-tenant: another organisation cannot enumerate this meeting's transcripts
+    other = _auth_headers("sub-tx-other", "txother@org.example.com")
+    other_org = client.post(
+        "/api/v1/organisations", json={"name": "Org other-tx-list"}, headers=other
+    ).json()
+    other_headers = _auth_headers(
+        "sub-tx-other", "txother@org.example.com", org_id=other_org["id"]
+    )
+    cross = client.get(
+        f"/api/v1/meetings/{meeting_id}/transcripts", headers=other_headers
+    )
+    assert cross.status_code in (403, 404)

@@ -23,6 +23,7 @@ from app.models.meetings_media import (
     Meeting,
     MeetingParticipant,
 )
+from app.models.transcription import Transcript
 from app.services.audit import record_audit_event
 from app.services.storage_media import (
     get_private_storage,
@@ -870,5 +871,56 @@ def list_meeting_media(
                     "derivatives": deriv_by_asset.get(a.id, []),
                 }
                 for a in assets
+            ],
+        }
+
+
+@router.get("/{meeting_id}/transcripts")
+def list_meeting_transcripts(
+    meeting_id: str,
+    ctx: TenantAccessContext = Depends(require_permission("meeting.view")),
+    db: Session = Depends(get_db),
+) -> dict:
+    """
+    Lists transcripts for a meeting in the active organisation (newest first)
+    so clients can discover existing transcripts without knowing a transcript ID.
+    """
+    with tenant_db_context(
+        db, organisation_id=ctx.organisation.id, user_id=ctx.user.id
+    ):
+        meeting = db.scalars(
+            select(Meeting).where(Meeting.id == meeting_id)
+        ).first()
+        if meeting is None:
+            raise NexusAPIError(
+                status_code=404,
+                code="meeting_not_found",
+                message="Meeting not found in the active organisation.",
+            )
+
+        transcripts = list(
+            db.scalars(
+                select(Transcript)
+                .where(Transcript.meeting_id == meeting_id)
+                .order_by(Transcript.created_at.desc(), Transcript.id.asc())
+            ).all()
+        )
+
+        return {
+            "meeting_id": meeting_id,
+            "items": [
+                {
+                    "id": t.id,
+                    "meeting_id": t.meeting_id,
+                    "media_asset_id": t.media_asset_id,
+                    "status": t.status,
+                    "language_code": t.language_code,
+                    "detected_language": t.detected_language,
+                    "asr_model_id": t.asr_model_id,
+                    "current_revision_number": t.current_revision_number,
+                    "created_at": t.created_at.isoformat(),
+                    "updated_at": t.updated_at.isoformat(),
+                }
+                for t in transcripts
             ],
         }

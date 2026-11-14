@@ -8,7 +8,7 @@
     "build": "next build",
     "start": "next start",
     "typecheck": "tsc --noEmit",
-    "test": "node --test tests/foundation.test.mjs tests/recorder.test.mjs tests/transcript-editor.test.mjs tests/auth-flow.test.mjs"
+    "test": "node --test tests/foundation.test.mjs tests/recorder.test.mjs tests/transcript-editor.test.mjs tests/auth-flow.test.mjs tests/meeting-status.test.mjs"
   },
   "dependencies": {
     "next": "^14.2.0",
