@@ -34,12 +34,18 @@ Use the stack explicitly established in the current repository and blueprint. Do
 
 ## Current work snapshot
 Keep this section updated by the project owner or lead agent:
-- Current release/milestone: Phase 3 — Transcription (Completed).
-- Active branch: `feat/phase-3-transcription`
+- Current release/milestone: Phases 1–9 implementation complete (release-ready pending owner-operated gates).
+- Active branch: `main` (all phase branches merged via no-ff merge commits).
 - Approved delivery & hosting path: OpenCode → GitHub (CI/CD, SDLC gates) → Vercel (`apps/web`) + Cloudflare (Backend Edge/WAF/Tunnel/R2) + Hostinger VPS Self-Hosting (`apps/api`, workers, PostgreSQL/Redis) + Supabase Auth + Multi-Provider Email (Resend, Emailbump, Unipost).
 - Implemented features:
-  - Phase 1: Secure Foundation (Supabase Auth JWT verification, multi-tenant RBAC, PostgreSQL RLS baseline, tamper-evident hash-chained audit service, Resend/Emailbump/Unipost email adapter, SDLC/DevOps pipelines).
-  - Phase 2: Recording and Media (Meeting creation & participant roster, mandatory pre-recording notice & host confirmation gate, browser microphone recorder state machine & unload guard, resumable chunked upload with SHA-256 & magic-byte validation, private tenant-prefixed storage, asynchronous media validation/normalisation worker preserving original media separately from derivatives, and short-lived signed playback URLs).
-  - Phase 3: Transcription (Replaceable server-side ASR adapter interface with deterministic CPU-safe stub for CI/development and deferred faster-whisper production adapter, queued idempotent transcription jobs, timestamped segments with confidence metadata, language selection & allowlist, model-suggested speaker diarisation (`is_model_suggestion=true`, `identity_verified=false`), human transcript editing with immutable revision history & undo, speaker relabel history, bulk find/replace, TXT/SRT/VTT exports, and WER evaluation harness with per-segment metrics & accuracy disclaimer).
-- Known blockers: None for Phase 3. Voice cloning remains disabled by feature flag (`VOICE_CLONING_ENABLED=false`) pending Phase 6 governance gates.
-- Next approved task: Phase 4 — Document Studio (`prompts/phases/04_PHASE_DOCUMENTS.md`).
+  - Phase 1: Secure Foundation (Supabase Auth JWT verification, multi-tenant RBAC, PostgreSQL RLS baseline, tamper-evident hash-chained audit, Resend/Emailbump/Unipost email adapter, GitHub Actions SDLC gates).
+  - Phase 2: Recording and Media (meetings + participant roster, recording-notice gate, recorder state machine, resumable chunked uploads with checksum & magic-byte validation, private tenant storage, media validation worker, short-lived signed playback URLs).
+  - Phase 3: Transcription (replaceable ASR adapter + faster-whisper production path, idempotent jobs, timestamped/confidence segments, suggestion-only diarisation, revision-tracked editing/undo/relabel/find-replace, TXT/SRT/VTT exports, WER harness).
+  - Phase 4: Document Studio (DOCX/PDF/TXT ingest with OCR detection + review warnings, branded DOCX/PDF/TXT exports with templates, confidentiality labels, source-linked versioning).
+  - Phase 5: Voice Studio (standard TTS adapter, chunked synthesis, chapter markers, loudness normalisation, pronunciation dictionary, synthetic-audio disclosure).
+  - Phase 6: Voice Governance (consent + verification enrolment, private-by-default profiles, owner permission grants with expiry, immediate revocation blocking, voice audit trail; public flag locked OFF).
+  - Phase 7: Meeting Intelligence (permission-filtered retrieval before LLM, evidence-linked summaries/decisions/actions, grounded Q&A with abstention, prompt-injection detection, human review gate).
+  - Phase 8: Collaboration (comments, revocable share grants, privacy-safe notifications, approval workflows with self-approval denial, action assignments, HMAC-signed webhooks with replay protection).
+  - Phase 9: Hardening (automated release-readiness report with live checks: voice gate, RLS inventory, audit chain integrity, email failover, URL TTL bounds; contract inventory of 25+ endpoints; go/no-go recommendation; owner-operated gates enumerated).
+- Known blockers: None in code. Production launch still requires owner gates: penetration test, load benchmarks on Hostinger hardware, backup/restore drill, model/dependency licence legal review, jurisdiction consent review. PostgreSQL RLS verification runs live in CI/production (SQLite test dialect defers it by design).
+- Next approved task: Owner sign-off on release gate; deployment to Vercel/Cloudflare/Hostinger.
