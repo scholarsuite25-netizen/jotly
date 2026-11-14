@@ -31,7 +31,7 @@ Captured: `generated_at 2026-11-14T11:53:07.242565+00:00`, organisation `2a59a56
 ## 2. Frontend automated tests
 
 Command: `cd apps/web && npm test`  
-Result: **10 passed, 0 failed**
+Result: **16 passed, 0 failed** (includes new `meeting-status` suite: media/transcript summaries, latest-transcript selection, session-error detection). Backend: `cd apps/api && pytest` → **53 passed** (includes new per-meeting transcript listing + tenant-isolation test).
 
 Coverage (suite highlights): auth-session store/clear/expiry preview, sign-in flow, organisation selection/headers, authenticated API headers, recorder state machine (notice gate, record/pause/resume/stop/upload/saved), transcript editor (edit/undo/revisions, find-replace preview/apply preserving original ASR), diarisation labels rendered as model suggestions (not identity-verified).
 
@@ -50,8 +50,9 @@ Executed against `https://jotly-sigma.vercel.app/api/v1` (authenticated tenant a
 
 Verified on `https://jotly-sigma.vercel.app` (authenticated session):
 - Dashboard rendered for `samuel@jotly.org.ng` / organisation **Jotly** with **Create meeting**, **Open transcript**, and **Meetings** sections (including transcript handoff helper text in latest UI).
+- **Per-meeting discovery (commit `7bbc31a`, deployment `dpl_A78cFkr7kXFUcpCJSP3VZ5YiLAke`, READY) verified in-browser:** meetings table shows **Media** and **Transcripts** columns — `E2E Upload Test` → `1 media · validated`, `1 transcript` with **Open latest / Open completed** buttons (clicking **Open latest** opens the transcript editor); meetings without data render explicit empty states (`No media yet — record or upload`, `No transcripts yet`). New endpoint `GET /api/v1/meetings/{meeting_id}/transcripts` live-verified: `200` with `count=1` for `E2E Upload Test`, `200 count=0` for empty meetings, `404 meeting_not_found` for unknown IDs.
 - Meeting creation action performed in UI; backend confirms meeting present: titles include `["Browser UI Smoke Meeting","E2E Upload Test","Smoke Test Meeting"]`.
-- Recorder UI reached for **Browser UI Smoke Meeting** via **Record** action: recording-notice dialog/state displayed with host confirmation control. A UI defect (missing Bearer token on recorder notice/upload requests causing `Missing Bearer authentication token`) was identified and fixed in `apps/web/src/app/recorder-screen.jsx` (commit `c470bc0`, deployed `dpl_2e2p9wTjLWdSk11JcvRcZXa4nLcG`, READY); successful post-fix notice confirmation state transition requires manual browser confirmation.
+- Recorder UI reached for **Browser UI Smoke Meeting** via **Record** action: recording-notice dialog/state displayed with host confirmation control. A UI defect (missing Bearer token on recorder notice/upload requests causing `Missing Bearer authentication token`) was identified and fixed in `apps/web/src/app/recorder-screen.jsx` (commit `c470bc0`); **post-fix notice confirmation succeeded in-browser** — backend state for `Browser UI Smoke Meeting` changed from `idle/not confirmed` to `notice_confirmed/confirmed`.
 - Transcript editor opened for `7cf0db4b-7ec4-4119-946f-a41b3c60f0dd`, showing detected language/model, find/replace, editable segment with undo, and TXT/SRT/VTT export controls.
 
 **Not fully automated/evidenced in-browser (manual confirmation required):** live microphone permission/capture → in-browser record/upload flow and a complete single-pass click-through including media playback and export download in the browser UI. Browser automation in this environment was limited by UI re-renders/stale element refs; pipeline correctness is corroborated by production API E2E above.

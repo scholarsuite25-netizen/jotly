@@ -21,7 +21,7 @@ prompts/      Phase-by-phase build prompts
 
 ## Quality status
 
-- **58 automated tests** across backend (52) and frontend (10 suites shared) — all passing
+- **69 automated tests** across backend (53) and frontend (16) — all passing
 - **GitHub Actions CI** runs 3 quality gates on every push: secret scan +
   voice-cloning lock, backend security suite, frontend typecheck/tests
 - **8 reversible Alembic migrations** with PostgreSQL Row-Level Security on all
